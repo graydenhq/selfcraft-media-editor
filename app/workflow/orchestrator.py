@@ -1,7 +1,7 @@
 import os
 import shutil
 from app.ai.transcribe import transcribe, write_srt
-from app.ai.silence import detect_silence
+from app.ai.silence import remove_silence
 from app.ai.speaker import detect_speaker_name
 from app.media.render import burn_captions, export_final
 from app.export.naming import get_output_path
@@ -51,24 +51,31 @@ def process_video(video_path, video_id=None):
         else:
             report("Speaker not detected — continuing without name overlay")
 
-    # Step 3: Resize first
+    # Step 3: Remove silence
+    report("Removing silence from video…")
+    silence_removed_path = os.path.join(TEMP_FOLDER, f"{base_name}_nosilence.mp4")
+    actual_input = remove_silence(video_path, silence_removed_path, TEMP_FOLDER)
+
+    # Step 4: Resize
     report("Resizing video to target resolution…")
     target = 'landscape' if template == 'lesson' else 'reel'
     resized_path = os.path.join(TEMP_FOLDER, f"{base_name}_resized.mp4")
-    export_final(video_path, resized_path, target=target)
+    export_final(actual_input, resized_path, target=target)
 
-    # Step 4: Burn captions onto correctly sized video
+    # Step 5: Burn captions onto correctly sized video
     report("Burning captions onto video…")
     captioned_path = os.path.join(TEMP_FOLDER, f"{base_name}_captioned.mp4")
     burn_captions(resized_path, srt_path, captioned_path)
 
-    # Step 5: Move to Edited Videos with versioned name
+    # Step 6: Move to Edited Videos with versioned name
     report("Saving to Edited Videos…")
     output_path = get_output_path(video_path, EDITED_FOLDER)
     shutil.move(captioned_path, output_path)
 
-    # Step 6: Clean up
+    # Step 7: Clean up
     report("Cleaning up temporary files…")
+    if os.path.exists(silence_removed_path):
+        os.remove(silence_removed_path)
     os.remove(resized_path)
     os.remove(srt_path)
 

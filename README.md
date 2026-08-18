@@ -53,6 +53,10 @@ python -m venv .venv
 ### 3. Install Python dependencies
 
 ```bash
+# Install CPU-only PyTorch first (avoids downloading 2GB+ of GPU libraries)
+pip install torch --index-url https://download.pytorch.org/whl/cpu
+
+# Then install the rest
 pip install fastapi uvicorn openai-whisper watchdog python-multipart
 ```
 
@@ -271,7 +275,11 @@ After that, double-click `start.bat` every time you want to use the app.
    ```
 6. Install libraries:
    ```
-   pip install fastapi uvicorn openai-whisper watchdog python-multipart
+   # Install CPU-only PyTorch first (avoids downloading 2GB+ of GPU libraries)
+pip install torch --index-url https://download.pytorch.org/whl/cpu
+
+# Then install the rest
+pip install fastapi uvicorn openai-whisper watchdog python-multipart
    ```
 7. Open `config/settings.json` in Notepad and update folder paths.
    Use forward slashes and change `file_manager` to `explorer`:
