@@ -45,7 +45,11 @@ def add_video(filepath, metadata):
 
 def get_all_videos():
     conn = sqlite3.connect(DB_PATH)
-    rows = conn.execute("SELECT id, filepath, programme, week, module, lesson_number, lesson_title, status, date_added, progress FROM videos ORDER BY date_added DESC").fetchall()
+    rows = conn.execute(
+        "SELECT id, filepath, programme, week, module, lesson_number, "
+        "lesson_title, status, date_added, progress, srt_path "
+        "FROM videos ORDER BY date_added DESC"
+    ).fetchall()
     conn.close()
     return rows
 
@@ -92,3 +96,17 @@ def delete_by_filepath(filepath):
     conn.execute("DELETE FROM videos WHERE filepath = ?", (filepath,))
     conn.commit()
     conn.close()
+
+def set_srt_path(video_id, srt_path):
+    conn = sqlite3.connect(DB_PATH)
+    conn.execute("UPDATE videos SET srt_path = ? WHERE id = ?",
+                 (srt_path, video_id))
+    conn.commit()
+    conn.close()
+
+def get_srt_path(video_id):
+    conn = sqlite3.connect(DB_PATH)
+    row = conn.execute("SELECT srt_path FROM videos WHERE id = ?",
+                       (video_id,)).fetchone()
+    conn.close()
+    return row[0] if row else None

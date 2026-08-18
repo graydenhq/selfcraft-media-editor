@@ -1,8 +1,21 @@
 import subprocess
 from app.core.config import get_caption_style
 
-def burn_captions(input_path, srt_path, output_path):
-    style = get_caption_style()
+def burn_captions(input_path, srt_path, output_path, style=None):
+    if style is None:
+        style = get_caption_style('lesson')
+
+    position = style.get('position', 'bottom')
+    if position == 'top':
+        alignment = 6
+        margin_v = style.get('margin_bottom', 20)
+    elif position == 'middle':
+        alignment = 5
+        margin_v = 0
+    else:  # bottom
+        alignment = 2
+        margin_v = style.get('margin_bottom', 20)
+
     style_str = (
         f"FontName={style['font']}"
         f",FontSize={style['size']}"
@@ -10,8 +23,8 @@ def burn_captions(input_path, srt_path, output_path):
         f",OutlineColour={style['outline_colour']}"
         f",Outline={style['outline']}"
         f",Shadow={style['shadow']}"
-        f",Alignment=2"
-        f",MarginV={style['margin_bottom']}"
+        f",Alignment={alignment}"
+        f",MarginV={margin_v}"
     )
     safe_srt = srt_path.replace(':', '\\:')
     subtitle_filter = f"subtitles={safe_srt}:force_style='{style_str}'"

@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Subtitle Editor — SME</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: sans-serif; background: #111; color: #eee;
+           height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+    header { display: flex; align-items: center; justify-content: space-between;
+             padding: 0.75rem 1.25rem; background: #1a1a1a;
+             border-bottom: 1px solid #333; flex-shrink: 0;
+             flex-wrap: wrap; gap: 0.5rem; }
+    .header-left { display: flex; align-items: center; gap: 0.75rem; }
+    .back-btn { background: none; border: 1.5px solid #555; color: #aaa;
+                padding: 5px 12px; border-radius: 4px; cursor: pointer;
+                font-size: 0.8rem; }
+    .back-btn:hover { border-color: #999; color: white; }
+    h1 { font-size: 1rem; color: #eee; }
+    .video-title { font-size: 0.8rem; color: #888; margin-top: 2px; }
+    .header-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .btn { border: none; padding: 7px 18px; border-radius: 4px;
+           cursor: pointer; font-size: 0.85rem; font-weight: 600; }
+    .btn-approve { background: #2a9d2a; color: white; }
+    .btn-approve:hover { background: #1e7a1e; }
+    .btn-approve:disabled { background: #555; cursor: not-allowed; }
+    .btn-save { background: #1a6fcc; color: white; }
+    .btn-save:hover { background: #155ab0; }
+    .btn-preset { background: transparent; color: #888; font-size: 0.75rem;
+                  padding: 4px 10px; border: 1px solid #444; border-radius: 4px; }
+    .btn-preset:hover { border-color: #888; color: #ccc; }
+
+    .split { display: flex; flex: 1; overflow: hidden; }
+
+    .video-panel { flex: 1; display: flex; align-items: center;
+                   justify-content: center; background: #000;
+                   padding: 1rem; min-width: 0; }
+    .video-wrap { position: relative; display: inline-block;
+                  max-width: 100%; max-height: calc(100vh - 130px); }
+    #videoPlayer { display: block; max-width: 100%;
+                   max-height: calc(100vh - 130px); border-radius: 6px; }
+    #captionCanvas { position: absolute; top: 0; left: 0;
+                     width: 100%; height: 100%;
+                     pointer-events: none; border-radius: 6px; }
+
+    .right-panel { width: 400px; flex-shrink: 0; display: flex;
+                   flex-direction: column; background: #1a1a1a;
+                   border-left: 1px solid #333; }
+    .tabs { display: flex; border-bottom: 1px solid #333; }
+    .tab { flex: 1; padding: 0.6rem; text-align: center; font-size: 0.8rem;
+           color: #888; cursor: pointer; border-bottom: 2px solid transparent; }
+    .tab.active { color: white; border-bottom-color: #1a6fcc; }
+    .tab:hover { color: #ccc; }
+
+    .tab-content { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+    .tab-content.active { display: flex; }
+
+    .editor-header { padding: 0.75rem 1rem; border-bottom: 1px solid #333;
+                     font-size: 0.78rem; color: #888; display: flex;
+                     justify-content: space-between; align-items: center; }
+    .editor-list { flex: 1; overflow-y: auto; padding: 0.5rem; }
+    .caption-block { background: #222; border: 1.5px solid #333;
+                     border-radius: 6px; padding: 0.6rem 0.75rem;
+                     margin-bottom: 0.5rem; cursor: pointer; }
+    .caption-block:hover { border-color: #555; }
+    .caption-block.active { border-color: #1a6fcc; background: #1a2a3a; }
+    .caption-time { font-size: 0.72rem; color: #888; margin-bottom: 0.3rem;
+                    font-family: monospace; }
+    .caption-text { font-size: 0.85rem; outline: none; width: 100%;
+                    background: transparent; border: none; resize: none;
+                    color: #eee; font-family: inherit; line-height: 1.4; }
+    .caption-text:focus { color: white; }
+    .editor-footer { padding: 0.75rem 1rem; border-top: 1px solid #333;
+                     font-size: 0.75rem; color: #666; }
+
+    .style-panel { flex: 1; overflow-y: auto; padding: 1rem; }
+    .style-group { margin-bottom: 1rem; }
+    .style-group label { display: block; font-size: 0.78rem; color: #aaa;
+                          margin-bottom: 0.3rem; font-weight: 600; }
+    .style-group select, .style-group input {
+      width: 100%; padding: 7px 10px; background: #2a2a2a;
+      border: 1.5px solid #444; border-radius: 4px;
+      font-size: 0.83rem; color: #eee; }
+    .style-group select:focus, .style-group input:focus {
+      outline: none; border-color: #1a6fcc; }
+    .style-row { display: flex; gap: 0.5rem; }
+    .style-row .style-group { flex: 1; }
+    .style-section { font-size: 0.7rem; text-transform: uppercase;
+                     letter-spacing: 0.08em; color: #666; margin-bottom: 0.5rem;
+                     margin-top: 1rem; padding-bottom: 0.3rem;
+                     border-bottom: 1px solid #333; }
+    .preview-caption { background: #000; border-radius: 6px; padding: 0.75rem;
+                       margin-bottom: 1rem; min-height: 60px; display: flex;
+                       align-items: flex-end; justify-content: center; }
+    .preset-row { display: flex; align-items: center; justify-content: space-between;
+                  margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #333; }
+    .preset-label { font-size: 0.75rem; color: #666; }
+    .saved-note { font-size: 0.72rem; color: #2a9d2a; margin-top: 0.4rem;
+                  height: 1rem; text-align: right; }
+
+    .loading { display: flex; align-items: center; justify-content: center;
+               height: 100%; color: #666; font-size: 0.9rem; }
+
+    @media (max-width: 800px) {
+      .split { flex-direction: column; }
+      .right-panel { width: 100%; height: 50vh; border-left: none;
+                     border-top: 1px solid #333; }
+      #videoPlayer { max-height: 35vh; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <button class="back-btn" onclick="goBack()">← Back</button>
+    <div>
+      <h1>Subtitle Editor</h1>
+      <div class="video-title" id="videoTitle">Loading…</div>
+    </div>
+  </div>
+  <div class="header-actions">
+    <button class="btn btn-save" onclick="saveOnly()">💾 Save</button>
+    <button class="btn btn-approve" id="approveBtn" onclick="approveAndRender()">
+      ✓ Approve & Render
+    </button>
+  </div>
+</header>
+
+<div class="split">
+  <div class="video-panel">
+    <div class="video-wrap">
+      <video id="videoPlayer" controls></video>
+      <canvas id="captionCanvas"></canvas>
+    </div>
+  </div>
+
+  <div class="right-panel">
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('subtitles')">✏ Subtitles</div>
+      <div class="tab" onclick="switchTab('style')">🎨 Style</div>
+    </div>
+
+    <div class="tab-content active" id="tab-subtitles">
+      <div class="editor-header">
+        <span>Caption blocks</span>
+        <span id="blockCount">—</span>
+      </div>
+      <div class="editor-list" id="editorList">
+        <div class="loading">Loading subtitles…</div>
+      </div>
+      <div class="editor-footer">
+        Click any subtitle to jump to it in the video.
+      </div>
+    </div>
+
+    <div class="tab-content" id="tab-style">
+      <div class="style-panel">
+        <div class="preview-caption" id="stylePreview">
+          <span id="previewText"
+                style="color:white;font-family:sans-serif;font-size:14px;
+                       text-shadow:-1px -1px 0 #000,1px -1px 0 #000,
+                                   -1px 1px 0 #000,1px 1px 0 #000;">
+            Preview caption text
+          </span>
+        </div>
+
+        <div class="style-section">Position</div>
+        <div class="style-group">
+          <label>Vertical position</label>
+          <select id="s-position" onchange="updatePreview()">
+            <option value="bottom">Bottom</option>
+            <option value="top">Top</option>
+            <option value="middle">Middle</option>
+          </select>
+        </div>
+        <div class="style-group">
+          <label>Margin from edge (px)</label>
+          <input type="number" id="s-margin" min="0" max="200" step="5"
+                 value="20" oninput="updatePreview()">
+        </div>
+
+        <div class="style-section">Font</div>
+        <div class="style-group">
+          <label>Font family</label>
+          <select id="s-font" onchange="updatePreview()">
+            <option>Liberation Sans</option>
+            <option>Arial</option>
+            <option>DejaVu Sans</option>
+            <option>FreeSans</option>
+            <option>Noto Sans</option>
+          </select>
+        </div>
+        <div class="style-row">
+          <div class="style-group">
+            <label>Size</label>
+            <input type="number" id="s-size" min="8" max="72" step="1"
+                   value="14" oninput="updatePreview()">
+          </div>
+          <div class="style-group">
+            <label>Outline</label>
+            <input type="number" id="s-outline" min="0" max="5" step="1"
+                   value="2" oninput="updatePreview()">
+          </div>
+        </div>
+
+        <div class="preset-row">
+          <span class="preset-label">
+            Save as default for <span id="defaultLabel">this type</span>
+          </span>
+          <button class="btn btn-preset" onclick="setDefault()">
+            Save preset
+          </button>
+        </div>
+        <div class="saved-note" id="savedNote"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API = 'http://127.0.0.1:8000';
+  const params = new URLSearchParams(window.location.search);
+  const videoId = params.get('id');
+  const videoTitle = params.get('title') || 'Video';
+
+  let captions = [];
+  let videoType = 'lesson';
+  let currentStyle = {};
+  let animFrame = null;
+
+  document.getElementById('videoTitle').textContent = videoTitle;
+
+  // --- Tabs ---
+  function switchTab(name) {
+    const names = ['subtitles', 'style'];
+    document.querySelectorAll('.tab').forEach((t, i) => {
+      t.classList.toggle('active', names[i] === name);
+    });
+    document.querySelectorAll('.tab-content').forEach(c => {
+      c.classList.remove('active');
+    });
+    document.getElementById('tab-' + name).classList.add('active');
+  }
+
+  // --- SRT ---
+  function parseSrt(srt) {
+    const blocks = [];
+    const raw = srt.trim().split(/\n\s*\n/);
+    for (const block of raw) {
+      const lines = block.trim().split('\n');
+      if (lines.length < 3) continue;
+      blocks.push({
+        index: lines[0].trim(),
+        time: lines[1].trim(),
+        text: lines.slice(2).join('\n').trim()
+      });
+    }
+    return blocks;
+  }
+
+  function buildSrt(blocks) {
+    return blocks.map(b => `${b.index}\n${b.time}\n${b.text}`).join('\n\n') + '\n';
+  }
+
+  function timeToSeconds(t) {
+    const [h, m, rest] = t.split(':');
+    return parseInt(h) * 3600 + parseInt(m) * 60 + parseFloat(rest.replace(',', '.'));
+  }
+
+  // --- Editor ---
+  function renderEditor() {
+    document.getElementById('blockCount').textContent = `${captions.length} subtitles`;
+    document.getElementById('editorList').innerHTML = captions.map((c, i) => `
+      <div class="caption-block" id="block-${i}" onclick="seekTo(${i})">
+        <div class="caption-time">${c.time}</div>
+        <textarea class="caption-text" rows="2"
+          oninput="onEdit(${i}, this.value)"
+          onclick="event.stopPropagation()"
+        >${c.text}</textarea>
+      </div>
+    `).join('');
+  }
+
+  function onEdit(index, value) {
+    captions[index].text = value;
+  }
+
+  function seekTo(index) {
+    document.querySelectorAll('.caption-block')
+      .forEach(b => b.classList.remove('active'));
+    document.getElementById(`block-${index}`).classList.add('active');
+    const start = captions[index].time.split(' --> ')[0];
+    document.getElementById('videoPlayer').currentTime = timeToSeconds(start);
+  }
+
+  document.getElementById('videoPlayer').addEventListener('timeupdate', () => {
+    const t = document.getElementById('videoPlayer').currentTime;
+    for (let i = 0; i < captions.length; i++) {
+      const [s, e] = captions[i].time.split(' --> ').map(timeToSeconds);
+      if (t >= s && t <= e) {
+        document.querySelectorAll('.caption-block')
+          .forEach(b => b.classList.remove('active'));
+        const block = document.getElementById(`block-${i}`);
+        if (block) {
+          block.classList.add('active');
+          block.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+        break;
+      }
+    }
+  });
+
+  // --- Canvas caption renderer ---
+  function startCaptionRenderer() {
+    const video = document.getElementById('videoPlayer');
+    const canvas = document.getElementById('captionCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function render() {
+      canvas.width = video.videoWidth || video.offsetWidth;
+      canvas.height = video.videoHeight || video.offsetHeight;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const t = video.currentTime;
+      const style = getCurrentStyle();
+
+      let currentText = null;
+      for (const c of captions) {
+        const [s, e] = c.time.split(' --> ').map(timeToSeconds);
+        if (t >= s && t <= e) { currentText = c.text; break; }
+      }
+
+      if (currentText && canvas.width > 0 && canvas.height > 0) {
+        const fontSize = Math.max(12, Math.round(style.size * (canvas.height / 400)));
+        ctx.font = `${fontSize}px "${style.font}", sans-serif`;
+        ctx.textAlign = 'center';
+
+        const lines = currentText.split('\n');
+        const lineHeight = fontSize * 1.35;
+        const margin = Math.round((style.margin_bottom || 20) * (canvas.height / 400));
+        const position = style.position || 'bottom';
+
+        let startY;
+        if (position === 'top') {
+          startY = margin + fontSize;
+        } else if (position === 'middle') {
+          startY = (canvas.height / 2) - ((lines.length - 1) * lineHeight / 2);
+        } else {
+          startY = canvas.height - margin - (lines.length - 1) * lineHeight;
+        }
+
+        const outline = style.outline || 0;
+        lines.forEach((line, i) => {
+          const y = startY + i * lineHeight;
+          if (outline > 0) {
+            ctx.strokeStyle = 'rgba(0,0,0,0.9)';
+            ctx.lineWidth = outline * 2.5;
+            ctx.lineJoin = 'round';
+            ctx.strokeText(line, canvas.width / 2, y);
+          }
+          ctx.fillStyle = 'white';
+          ctx.fillText(line, canvas.width / 2, y);
+        });
+      }
+
+      animFrame = requestAnimationFrame(render);
+    }
+
+    function startRender() {
+      if (animFrame) cancelAnimationFrame(animFrame);
+      render();
+    }
+
+    video.addEventListener('loadedmetadata', startRender);
+    if (video.readyState >= 1) startRender();
+  }
+
+  // --- Style panel ---
+  function getCurrentStyle() {
+    return {
+      font: document.getElementById('s-font').value,
+      size: parseInt(document.getElementById('s-size').value) || 14,
+      outline: parseInt(document.getElementById('s-outline').value) || 2,
+      margin_bottom: parseInt(document.getElementById('s-margin').value) || 20,
+      position: document.getElementById('s-position').value,
+      colour: currentStyle.colour || '&H00FFFFFF',
+      outline_colour: currentStyle.outline_colour || '&H00000000',
+      shadow: currentStyle.shadow || 1
+    };
+  }
+
+  function loadStyleIntoPanel(style) {
+    document.getElementById('s-font').value = style.font || 'Liberation Sans';
+    document.getElementById('s-size').value = style.size || 14;
+    document.getElementById('s-outline').value = style.outline || 2;
+    document.getElementById('s-margin').value = style.margin_bottom || 20;
+    document.getElementById('s-position').value = style.position || 'bottom';
+    updatePreview();
+  }
+
+  function updatePreview() {
+    const font = document.getElementById('s-font').value;
+    const size = document.getElementById('s-size').value;
+    const outline = parseInt(document.getElementById('s-outline').value);
+    const pos = document.getElementById('s-position').value;
+    const text = document.getElementById('previewText');
+    const preview = document.getElementById('stylePreview');
+
+    text.style.fontFamily = font;
+    text.style.fontSize = size + 'px';
+    if (outline > 0) {
+      const s = Array.from({length: 8}, (_, i) => {
+        const a = i * 45 * Math.PI / 180;
+        return `${Math.cos(a)*outline}px ${Math.sin(a)*outline}px 0 #000`;
+      }).join(', ');
+      text.style.textShadow = s;
+    } else {
+      text.style.textShadow = 'none';
+    }
+    preview.style.alignItems =
+      pos === 'top' ? 'flex-start' :
+      pos === 'middle' ? 'center' : 'flex-end';
+  }
+
+  async function setDefault() {
+    const style = getCurrentStyle();
+    await fetch(`${API}/caption-style/${videoType}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(style)
+    });
+    const note = document.getElementById('savedNote');
+    note.textContent = `✓ Saved as default for ${videoType}`;
+    setTimeout(() => { note.textContent = ''; }, 3000);
+  }
+
+  // --- Save ---
+  async function saveOnly() {
+    const srt = buildSrt(captions);
+    await fetch(`${API}/srt/${videoId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ srt })
+    });
+    await fetch(`${API}/srt-style/${videoId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(getCurrentStyle())
+    });
+    const btn = document.querySelector('.btn-save');
+    const orig = btn.textContent;
+    btn.textContent = '✓ Saved';
+    btn.style.background = '#2a9d2a';
+    setTimeout(() => { btn.textContent = orig; btn.style.background = ''; }, 2000);
+  }
+
+  async function approveAndRender() {
+    const srt = buildSrt(captions);
+    await fetch(`${API}/srt/${videoId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ srt })
+    });
+    await fetch(`${API}/srt-style/${videoId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(getCurrentStyle())
+    });
+    const btn = document.getElementById('approveBtn');
+    btn.disabled = true;
+    btn.textContent = 'Approved…';
+    fetch(`${API}/approve/${videoId}`, { method: 'POST' }).catch(() => {});
+    setTimeout(() => goBack(), 800);
+  }
+
+  function goBack() {
+    if (animFrame) cancelAnimationFrame(animFrame);
+    window.location.href = 'dashboard.html';
+  }
+
+  // --- Load ---
+  async function load() {
+    document.getElementById('videoPlayer').src = `${API}/video-file/${videoId}`;
+
+    const srtRes = await fetch(`${API}/srt/${videoId}`);
+    if (!srtRes.ok) {
+      document.getElementById('editorList').innerHTML =
+        '<div class="loading">Could not load subtitles.</div>';
+      return;
+    }
+    const srtData = await srtRes.json();
+    captions = parseSrt(srtData.srt);
+    renderEditor();
+
+    const styleRes = await fetch(`${API}/caption-style/${videoId}`);
+    if (styleRes.ok) {
+      currentStyle = await styleRes.json();
+      loadStyleIntoPanel(currentStyle);
+    }
+
+    const vRes = await fetch(`${API}/videos`);
+    const videos = await vRes.json();
+    const v = videos.find(x => x.id == videoId);
+    if (v) {
+      if (v.filepath.includes('Teaching Reels')) videoType = 'reel';
+      else if (v.filepath.includes('Testimonials')) videoType = 'testimonial';
+      else videoType = 'lesson';
+    }
+    const typeLabels = {
+      lesson: 'Recorded Lessons',
+      reel: 'Teaching Reels',
+      testimonial: 'Testimonials'
+    };
+    document.getElementById('defaultLabel').textContent =
+      typeLabels[videoType] || videoType;
+
+    startCaptionRenderer();
+  }
+
+  load();
+</script>
+</body>
+</html>

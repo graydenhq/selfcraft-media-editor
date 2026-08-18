@@ -77,7 +77,8 @@ def list_videos():
             "lesson_title": r[6],
             "status": r[7],
             "date_added": r[8],
-            "progress": r[9]
+            "progress": r[9],
+            "srt_path": r[10]
         }
         for r in rows
     ]
@@ -128,14 +129,64 @@ def trigger_process(video_id: int):
     update_status(video_id, "processing")
     update_progress(video_id, "Starting…")
     try:
-        output = process_video(video[1], video_id=video_id)
+        from app.workflow.orchestrator import process_phase1
+        result = process_phase1(video[1], video_id=video_id)
+        if result == 'awaiting_review':
+            update_status(video_id, "awaiting_review")
+            return {"status": "awaiting_review"}
+        update_status(video_id, "completed")
+        update_progress(video_id, None)
+        return {"status": "completed", "output": result}
+    except Exception as e:
+        update_status(video_id, "failed")
+        update_progress(video_id, f"Error: {str(e)}")
+        print(f"Processing failed for video {video_id}: {str(e)}")
+        return {"status": "failed", "error": str(e)}
+
+@app.get("/srt/{video_id}")
+def get_srt(video_id: int):
+    from database.db import get_srt_path
+    srt_path = get_srt_path(video_id)
+    if not srt_path or not os.path.exists(srt_path):
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="SRT not found")
+    with open(srt_path, 'r', encoding='utf-8') as f:
+        return {"srt": f.read(), "path": srt_path}
+
+@app.post("/srt/{video_id}")
+def save_srt(video_id: int, data: dict):
+    from database.db import get_srt_path
+    srt_path = get_srt_path(video_id)
+    if not srt_path:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="SRT path not found")
+    with open(srt_path, 'w', encoding='utf-8') as f:
+        f.write(data['srt'])
+    return {"status": "saved"}
+
+@app.post("/approve/{video_id}")
+def approve_and_render(video_id: int):
+    video = get_video_by_id(video_id)
+    if not video:
+        return {"error": "Video not found"}
+    from database.db import get_srt_path
+    srt_path = get_srt_path(video_id)
+    if not srt_path or not os.path.exists(srt_path):
+        return {"error": "SRT file not found — re-process this video"}
+    update_status(video_id, "processing")
+    update_progress(video_id, "Rendering approved subtitles…")
+    # Get any custom style saved from the editor
+    custom_style = _render_styles.pop(video_id, None)
+    try:
+        from app.workflow.orchestrator import process_phase2
+        output = process_phase2(video[1], srt_path, video_id=video_id,
+                                caption_style=custom_style)
         update_status(video_id, "completed")
         update_progress(video_id, None)
         return {"status": "completed", "output": output}
     except Exception as e:
         update_status(video_id, "failed")
         update_progress(video_id, f"Error: {str(e)}")
-        print(f"Processing failed for video {video_id}: {str(e)}")
         return {"status": "failed", "error": str(e)}
 
 @app.post("/sync")
@@ -144,14 +195,13 @@ def sync_videos():
     edited_folder = folders['edited_videos']
     rows = get_all_videos()
     changes = []
-
     for r in rows:
         video_id = r[0]
         raw_path = r[1]
         status = r[7]
 
-        # Never touch a job that is currently processing
-        if status == 'processing':
+        # Never touch a job that is mid-pipeline
+        if status in ('processing', 'awaiting_review'):
             continue
 
         if not os.path.exists(raw_path):
@@ -208,16 +258,23 @@ def serve_video(video_id: int):
 def serve_edited(video_id: int):
     from fastapi.responses import FileResponse
     from fastapi import HTTPException
+    import re
     video = get_video_by_id(video_id)
     if not video:
         raise HTTPException(status_code=404, detail="Video not found")
     folders = get_folders()
     base = os.path.splitext(os.path.basename(video[1]))[0]
     pattern = os.path.join(folders['edited_videos'], f"{base} (Edited*).mp4")
-    existing = sorted(glob.glob(pattern))
+    existing = glob.glob(pattern)
     if not existing:
         raise HTTPException(status_code=404, detail="No edited version found")
-    return FileResponse(existing[-1], media_type="video/mp4")
+
+    def version_key(path):
+        match = re.search(r'\(Edited v?(\d+)\)', path)
+        return int(match.group(1)) if match else 0
+
+    latest = sorted(existing, key=version_key)[-1]
+    return FileResponse(latest, media_type="video/mp4")
 
 @app.post("/restart")
 def restart_server():
@@ -257,17 +314,71 @@ def get_raw_path(video_id: int):
     video = get_video_by_id(video_id)
     if not video:
         return {"path": None}
-    return {"path": video[1]}
+    return {
+        "path": video[1],
+        "filename": os.path.basename(video[1])
+    }
 
 @app.get("/edited-path/{video_id}")
 def get_edited_path(video_id: int):
+    import re
     video = get_video_by_id(video_id)
     if not video:
         return {"path": None}
     folders = get_folders()
     base = os.path.splitext(os.path.basename(video[1]))[0]
     pattern = os.path.join(folders['edited_videos'], f"{base} (Edited*).mp4")
-    existing = sorted(glob.glob(pattern))
+    existing = glob.glob(pattern)
     if not existing:
         return {"path": None}
-    return {"path": existing[-1]}
+
+    def version_key(path):
+        match = re.search(r'\(Edited v?(\d+)\)', path)
+        return int(match.group(1)) if match else 0
+
+    latest = sorted(existing, key=version_key)[-1]
+    return {"path": latest, "filename": os.path.basename(latest)}
+
+@app.post("/caption-style/{video_type}")
+def save_caption_style(video_type: str, style: dict):
+    import json
+    if video_type not in ('lesson', 'reel', 'testimonial'):
+        return {"error": "Invalid video type"}
+    config_path = os.path.join(
+        os.path.dirname(__file__), '..', '..', 'config', 'settings.json'
+    )
+    cfg = load_config()
+    if 'lesson' not in cfg['captions']:
+        # Migrate old flat format
+        old = cfg['captions']
+        cfg['captions'] = {
+            'lesson': old.copy(),
+            'reel': old.copy(),
+            'testimonial': old.copy()
+        }
+    cfg['captions'][video_type] = style
+    with open(config_path, 'w') as f:
+        json.dump(cfg, f, indent=2)
+    return {"status": "saved"}
+
+@app.get("/caption-style/{video_id}")
+def get_video_caption_style(video_id: int):
+    from app.core.config import get_caption_style
+    from app.workflow.orchestrator import get_template
+    video = get_video_by_id(video_id)
+    if not video:
+        return get_caption_style('lesson')
+    template = get_template(video[1])
+    return get_caption_style(template)
+
+# In-memory store for per-render caption styles
+_render_styles = {}
+
+@app.post("/srt-style/{video_id}")
+def save_render_style(video_id: int, style: dict):
+    _render_styles[video_id] = style
+    return {"status": "saved"}
+
+@app.get("/srt-style/{video_id}")
+def get_render_style(video_id: int):
+    return _render_styles.get(video_id, {})

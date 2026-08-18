@@ -25,34 +25,32 @@
     .btn-danger:hover { background: #aa1111; }
     .btn-green { background: #2a9d2a; color: white; }
     .btn-green:hover { background: #1e7a1e; }
-    .btn-outline { background: white; color: #1a1a1a;
-                   border: 1.5px solid #ccc; }
+    .btn-outline { background: white; color: #1a1a1a; border: 1.5px solid #ccc; }
     .btn-outline:hover { background: #f5f5f5; border-color: #999; }
     .btn-play { background: #1a6fcc; color: white; }
     .btn-play:hover { background: #155ab0; }
     .btn-play-edited { background: #7b2fbe; color: white; }
     .btn-play-edited:hover { background: #6320a0; }
-    .btn:disabled { background: #ccc !important;
-                    border-color: #ccc !important;
+    .btn-warn { background: #e67e00; color: white; }
+    .btn-warn:hover { background: #c46a00; }
+    .btn:disabled { background: #ccc !important; border-color: #ccc !important;
                     color: #fff !important; cursor: not-allowed; }
     .btn-sm { padding: 4px 10px; font-size: 0.75rem; }
 
-    .folder-bar { display: flex; gap: 0.5rem; flex-wrap: wrap;
-                  margin-bottom: 1.25rem; }
-    .folder-btn { display: flex; align-items: center; gap: 6px;
-                  background: white; border: 1.5px solid #ddd;
-                  border-radius: 6px; padding: 6px 12px;
+    .folder-bar { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+    .folder-btn { display: flex; align-items: center; gap: 6px; background: white;
+                  border: 1.5px solid #ddd; border-radius: 6px; padding: 6px 12px;
                   font-size: 0.8rem; cursor: pointer; color: #333;
                   transition: border-color 0.15s, background 0.15s; }
     .folder-btn:hover { border-color: #999; background: #fafafa; }
 
-    .stats { display: flex; gap: 0.75rem; flex-wrap: wrap;
-             margin-bottom: 1.25rem; }
+    .stats { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
     .stat { background: white; border-radius: 6px; padding: 0.6rem 1rem;
             font-size: 0.78rem; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
     .stat strong { display: block; font-size: 1.25rem; }
     .stat.waiting strong { color: #888; }
     .stat.processing strong { color: #e67e00; }
+    .stat.review strong { color: #e67e00; }
     .stat.completed strong { color: #2a9d2a; }
     .stat.failed strong { color: #cc2222; }
 
@@ -60,20 +58,21 @@
     table { width: 100%; border-collapse: collapse; background: white;
             border-radius: 8px; overflow: hidden;
             box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
-    th { background: #1a1a1a; color: white; padding: 11px 14px;
-         text-align: left; font-size: 0.78rem;
-         text-transform: uppercase; letter-spacing: 0.05em;
+    th { background: #1a1a1a; color: white; padding: 11px 14px; text-align: left;
+         font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em;
          white-space: nowrap; }
     td { padding: 11px 14px; border-bottom: 1px solid #eee;
          font-size: 0.85rem; vertical-align: middle; }
     tr:last-child td { border-bottom: none; }
     tr.row-completed td { background: #f8fff8; }
     tr.row-failed td { background: #fff8f8; }
+    tr.row-awaiting_review td { background: #fff8f0; }
 
     .status { font-weight: bold; font-size: 0.78rem;
               padding: 3px 8px; border-radius: 10px; white-space: nowrap; }
     .status-detected { background: #eee; color: #666; }
     .status-processing { background: #fff3e0; color: #e67e00; }
+    .status-awaiting_review { background: #fff3e0; color: #e67e00; }
     .status-completed { background: #e8f5e9; color: #2a9d2a; }
     .status-failed { background: #fdecea; color: #cc2222; }
 
@@ -82,26 +81,20 @@
                      font-style: italic; max-width: 180px; }
     .progress-dot { display: inline-block; animation: blink 1s infinite; }
     @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.2;} }
-    .v2-note { font-size: 0.72rem; color: #888;
-               display: block; margin-top: 3px; }
+    .v2-note { font-size: 0.72rem; color: #888; display: block; margin-top: 3px; }
     .content-type { font-size: 0.72rem; color: #888; background: #f0f0f0;
                     padding: 2px 6px; border-radius: 4px;
                     display: inline-block; margin-top: 3px; }
-    .action-cell { display: flex; flex-direction: column;
-                   gap: 4px; align-items: flex-start; }
+    .action-cell { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
     .play-row { display: flex; gap: 4px; margin-top: 2px; }
     .empty { text-align: center; padding: 3rem; color: #999; }
 
-    /* Restart banner */
-    .restart-banner { display: none; background: #fff3e0;
-                      border: 1.5px solid #e67e00; border-radius: 6px;
-                      padding: 0.75rem 1rem; margin-bottom: 1rem;
-                      font-size: 0.85rem; color: #7a4000;
-                      align-items: center; justify-content: space-between;
-                      gap: 0.75rem; flex-wrap: wrap; }
+    .restart-banner { display: none; background: #fff3e0; border: 1.5px solid #e67e00;
+                      border-radius: 6px; padding: 0.75rem 1rem; margin-bottom: 1rem;
+                      font-size: 0.85rem; color: #7a4000; align-items: center;
+                      justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
     .restart-banner.show { display: flex; }
 
-    /* Video player modal */
     .modal-overlay { display: none; position: fixed; inset: 0;
                      background: rgba(0,0,0,0.82); z-index: 200;
                      align-items: center; justify-content: center;
@@ -110,27 +103,22 @@
     .modal-title { color: white; font-size: 0.9rem; font-weight: 600;
                    max-width: 90vw; text-align: center; }
     .modal-subtitle { color: #aaa; font-size: 0.78rem; }
-    .modal-video { max-width: 90vw; max-height: 70vh;
-                   border-radius: 8px; background: black; }
-    .modal-close { color: white; background: rgba(255,255,255,0.15);
-                   border: none; padding: 8px 20px; border-radius: 4px;
-                   cursor: pointer; font-size: 0.85rem; }
+    .modal-video { max-width: 90vw; max-height: 70vh; border-radius: 8px; background: black; }
+    .modal-close { color: white; background: rgba(255,255,255,0.15); border: none;
+                   padding: 8px 20px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; }
     .modal-close:hover { background: rgba(255,255,255,0.25); }
 
-    /* Settings panel */
     .settings-overlay { display: none; position: fixed; inset: 0;
                         background: rgba(0,0,0,0.45); z-index: 100;
                         align-items: center; justify-content: center; }
     .settings-overlay.open { display: flex; }
-    .settings-panel { background: white; border-radius: 10px;
-                      padding: 1.5rem; width: 100%; max-width: 540px;
-                      max-height: 90vh; overflow-y: auto;
+    .settings-panel { background: white; border-radius: 10px; padding: 1.5rem;
+                      width: 100%; max-width: 540px; max-height: 90vh; overflow-y: auto;
                       box-shadow: 0 8px 32px rgba(0,0,0,0.18); }
     .settings-panel h2 { font-size: 1.1rem; margin-bottom: 1.25rem; }
     .settings-section-title { font-size: 0.72rem; text-transform: uppercase;
-                               letter-spacing: 0.08em; color: #999;
-                               margin-bottom: 0.75rem; padding-bottom: 0.4rem;
-                               border-bottom: 1px solid #eee; }
+                               letter-spacing: 0.08em; color: #999; margin-bottom: 0.75rem;
+                               padding-bottom: 0.4rem; border-bottom: 1px solid #eee; }
     .settings-group { margin-bottom: 1rem; }
     .settings-group label { display: block; font-size: 0.8rem; color: #555;
                              margin-bottom: 0.3rem; font-weight: 600; }
@@ -143,10 +131,8 @@
     .folder-input-row input { flex: 1; }
     .settings-row { display: flex; gap: 0.75rem; }
     .settings-row .settings-group { flex: 1; }
-    .settings-footer { display: flex; justify-content: flex-end;
-                       gap: 0.5rem; margin-top: 1rem; }
-    .settings-note { font-size: 0.75rem; color: #999;
-                     margin-top: 0.3rem; }
+    .settings-footer { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1rem; }
+    .settings-note { font-size: 0.75rem; color: #999; margin-top: 0.3rem; }
 
     .card-list { display: none; flex-direction: column; gap: 0.75rem; }
     .card { background: white; border-radius: 8px; padding: 1rem;
@@ -154,12 +140,11 @@
     .card.card-completed { border-left: 4px solid #2a9d2a; background: #f8fff8; }
     .card.card-failed { border-left: 4px solid #cc2222; background: #fff8f8; }
     .card.card-processing { border-left: 4px solid #e67e00; }
+    .card.card-awaiting_review { border-left: 4px solid #e67e00; background: #fff8f0; }
     .card.card-detected { border-left: 4px solid #ccc; }
     .card-title { font-weight: bold; margin-bottom: 0.3rem; font-size: 0.92rem; }
-    .card-meta { font-size: 0.78rem; color: #777;
-                 margin-bottom: 0.6rem; line-height: 1.7; }
-    .card-progress { font-size: 0.78rem; color: #e67e00;
-                     font-style: italic; margin-bottom: 0.5rem; }
+    .card-meta { font-size: 0.78rem; color: #777; margin-bottom: 0.6rem; line-height: 1.7; }
+    .card-progress { font-size: 0.78rem; color: #e67e00; font-style: italic; margin-bottom: 0.5rem; }
     .card-footer { display: flex; flex-direction: column; gap: 0.5rem; }
     .card-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
 
@@ -184,8 +169,7 @@
 </div>
 
 <!-- Settings overlay -->
-<div class="settings-overlay" id="settingsOverlay"
-     onclick="closeSettingsIfOutside(event)">
+<div class="settings-overlay" id="settingsOverlay" onclick="closeSettingsIfOutside(event)">
   <div class="settings-panel">
     <h2>⚙️ Settings</h2>
 
@@ -194,33 +178,28 @@
       <label>Raw Videos Folder</label>
       <div class="folder-input-row">
         <input type="text" id="cfg-raw">
-        <button class="btn btn-outline"
-                onclick="browseTo('cfg-raw')">Browse</button>
+        <button class="btn btn-outline" onclick="browseTo('cfg-raw')">Browse</button>
       </div>
     </div>
     <div class="settings-group">
       <label>Edited Videos Folder</label>
       <div class="folder-input-row">
         <input type="text" id="cfg-edited">
-        <button class="btn btn-outline"
-                onclick="browseTo('cfg-edited')">Browse</button>
+        <button class="btn btn-outline" onclick="browseTo('cfg-edited')">Browse</button>
       </div>
     </div>
     <div class="settings-group">
       <label>Temp Folder</label>
       <div class="folder-input-row">
         <input type="text" id="cfg-temp">
-        <button class="btn btn-outline"
-                onclick="browseTo('cfg-temp')">Browse</button>
+        <button class="btn btn-outline" onclick="browseTo('cfg-temp')">Browse</button>
       </div>
     </div>
     <div class="settings-note" style="margin-bottom:0.5rem">
       ⚠ Folder changes require a server restart to take effect.
     </div>
 
-    <div class="settings-section-title" style="margin-top:1rem">
-      File Manager
-    </div>
+    <div class="settings-section-title" style="margin-top:1rem">File Manager</div>
     <div class="settings-group">
       <label>Open folders with</label>
       <select id="cfg-filemanager">
@@ -241,9 +220,7 @@
         <option value="mpv">mpv</option>
         <option value="default">System default player</option>
       </select>
-      <div class="settings-note">
-        VLC and mpv must be installed on your machine separately.
-      </div>
+      <div class="settings-note">VLC and mpv must be installed separately.</div>
     </div>
 
     <div class="settings-section-title">Caption Style</div>
@@ -274,8 +251,7 @@
       </div>
     </div>
     <div class="settings-note" style="margin-bottom:0.5rem">
-      Caption changes take effect on the next video processed.
-      No restart needed.
+      Caption changes take effect on the next video processed. No restart needed.
     </div>
 
     <div class="settings-section-title">Whisper Model</div>
@@ -286,16 +262,25 @@
         <option value="base">Balanced — recommended</option>
         <option value="small">Slower — higher accuracy</option>
       </select>
+      <div class="settings-note">Model changes require a server restart.</div>
+    </div>
+
+    <div class="settings-section-title">Subtitle Review</div>
+    <div class="settings-group">
+      <label>Review subtitles before rendering</label>
+      <select id="cfg-review">
+        <option value="true">Enabled — pause and review every video</option>
+        <option value="false">Disabled — process automatically</option>
+      </select>
       <div class="settings-note">
-        Model changes require a server restart to take effect.
+        When enabled, processing pauses after transcription so you can
+        check and edit subtitles before the final video is rendered.
       </div>
     </div>
 
     <div class="settings-footer">
       <button class="btn btn-outline" onclick="closeSettings()">Cancel</button>
-      <button class="btn btn-dark" onclick="saveSettings()">
-        Save Settings
-      </button>
+      <button class="btn btn-dark" onclick="saveSettings()">Save Settings</button>
     </div>
   </div>
 </div>
@@ -303,30 +288,21 @@
 <!-- Main UI -->
 <header>
   <div class="header-left">
-    <img src="logo.jpeg" alt="SelfCraft"
-         onerror="this.style.display='none'">
+    <img src="logo.jpeg" alt="SelfCraft" onerror="this.style.display='none'">
     <div>
       <h1>SelfCraft Media Editor</h1>
       <div class="subtitle" id="subtitle">Connecting…</div>
     </div>
   </div>
   <div class="header-actions">
-    <button class="btn btn-outline" onclick="openSettings()">
-      ⚙️ Settings
-    </button>
-    <button class="btn btn-danger" onclick="clearCompleted()">
-      🗑 Clear Completed
-    </button>
+    <button class="btn btn-outline" onclick="openSettings()">⚙️ Settings</button>
+    <button class="btn btn-danger" onclick="clearCompleted()">🗑 Clear Completed</button>
   </div>
 </header>
 
-<!-- Restart banner -->
 <div class="restart-banner" id="restartBanner">
-  <span>⚠ Settings saved. A restart is needed for folder and model
-    changes to take effect.</span>
-  <button class="btn btn-dark" onclick="restartServer()">
-    ↺ Restart Now
-  </button>
+  <span>⚠ Settings saved. A restart is needed for folder and model changes to take effect.</span>
+  <button class="btn btn-dark" onclick="restartServer()">↺ Restart Now</button>
 </div>
 
 <div class="folder-bar">
@@ -343,12 +319,9 @@
 
 <div class="stats">
   <div class="stat waiting"><strong id="s-waiting">—</strong>Waiting</div>
-  <div class="stat processing">
-    <strong id="s-processing">—</strong>Processing
-  </div>
-  <div class="stat completed">
-    <strong id="s-completed">—</strong>Completed
-  </div>
+  <div class="stat processing"><strong id="s-processing">—</strong>Processing</div>
+  <div class="stat review"><strong id="s-review">—</strong>Awaiting Review</div>
+  <div class="stat completed"><strong id="s-completed">—</strong>Completed</div>
   <div class="stat failed"><strong id="s-failed">—</strong>Failed</div>
 </div>
 
@@ -373,6 +346,7 @@
 <script>
   const API = 'http://127.0.0.1:8000';
   let isProcessing = false;
+  let serverOnline = false;
   const versionCache = {};
   let lastVideoJson = '';
   let lastCardJson = '';
@@ -382,12 +356,12 @@
     if (!str) return '—';
     const d = new Date(str.replace(' ', 'T') + 'Z');
     return d.toLocaleDateString(undefined, { day:'numeric', month:'short' })
-      + ' ' + d.toLocaleTimeString(undefined,
-          { hour:'2-digit', minute:'2-digit' });
+      + ' ' + d.toLocaleTimeString(undefined, { hour:'2-digit', minute:'2-digit' });
   }
 
   function statusBadge(s) {
-    return `<span class="status status-${s}">${s}</span>`;
+    const label = s === 'awaiting_review' ? 'review needed' : s;
+    return `<span class="status status-${s}">${label}</span>`;
   }
 
   function contentInfo(v) {
@@ -407,16 +381,16 @@
       return `<span class="progress-cell">
                 <span class="progress-dot">●</span> ${v.progress}
               </span>`;
-    if (v.status === 'failed' && v.progress)
-      return `<span style="font-size:0.75rem;color:#cc2222">
-                ${v.progress}
+    if (v.status === 'awaiting_review')
+      return `<span style="font-size:0.75rem;color:#e67e00">
+                Transcript ready — click Edit Subtitles
               </span>`;
+    if (v.status === 'failed' && v.progress)
+      return `<span style="font-size:0.75rem;color:#cc2222">${v.progress}</span>`;
     return '—';
   }
 
-  function versionLabel(id) {
-    return versionCache[id] || '…';
-  }
+  function versionLabel(id) { return versionCache[id] || '…'; }
 
   async function fetchVersionLabel(id) {
     try {
@@ -442,26 +416,42 @@
     return `<div class="play-row">${rawBtn}${editedBtn}</div>`;
   }
 
-function actionCell(v) {
+  function actionCell(v) {
     const dis = (isProcessing || !serverOnline) ? ' disabled' : '';
     let mainBtn = '';
     if (v.status === 'detected')
       mainBtn = `<button class="btn btn-dark"
-                   onclick="process(${v.id},this)"${dis}>
-                   ▶ Process</button>`;
+                   onclick="process(${v.id},this)"${dis}>▶ Process</button>`;
+    else if (v.status === 'awaiting_review')
+      mainBtn = `<button class="btn btn-warn"
+                   onclick="openEditor(${v.id},'${escapeHtml(v.lesson_title || v.filepath.split('/').pop())}')">
+                   ✎ Edit Subtitles</button>`;
     else if (v.status === 'failed')
       mainBtn = `<button class="btn btn-danger"
-                   onclick="process(${v.id},this)"${dis}>
-                   ↺ Retry</button>`;
+                   onclick="process(${v.id},this)"${dis}>↺ Retry</button>`;
     else if (v.status === 'completed')
       mainBtn = `<button class="btn btn-green"
-                   onclick="process(${v.id},this)"${dis}>
-                   ↺ Re-run</button>
+                   onclick="process(${v.id},this)"${dis}>↺ Re-run</button>
                  <span class="v2-note">${versionLabel(v.id)}</span>`;
-    return `<div class="action-cell">
-              ${mainBtn}
-              ${playButtons(v)}
-            </div>`;
+    return `<div class="action-cell">${mainBtn}${playButtons(v)}</div>`;
+  }
+
+  function cardAction(v) {
+    const dis = (isProcessing || !serverOnline) ? ' disabled' : '';
+    if (v.status === 'detected')
+      return `<button class="btn btn-dark btn-sm"
+                onclick="process(${v.id},this)"${dis}>▶ Process</button>`;
+    if (v.status === 'awaiting_review')
+      return `<button class="btn btn-warn btn-sm"
+                onclick="openEditor(${v.id},'${escapeHtml(v.lesson_title || v.filepath.split('/').pop())}')">
+                ✎ Edit Subtitles</button>`;
+    if (v.status === 'failed')
+      return `<button class="btn btn-danger btn-sm"
+                onclick="process(${v.id},this)"${dis}>↺ Retry</button>`;
+    if (v.status === 'completed')
+      return `<button class="btn btn-green btn-sm"
+                onclick="process(${v.id},this)"${dis}>↺ Re-run</button>`;
+    return '';
   }
 
   function renderTable(videos) {
@@ -496,9 +486,7 @@ function actionCell(v) {
     }
     container.innerHTML = videos.map(v => `
       <div class="card card-${v.status}">
-        <div class="card-title">
-          ${v.lesson_title || v.filepath.split('/').pop()}
-        </div>
+        <div class="card-title">${v.lesson_title || v.filepath.split('/').pop()}</div>
         <div class="card-meta">
           ${contentInfo(v)}<br>
           🕐 ${formatDate(v.date_added)}
@@ -507,22 +495,12 @@ function actionCell(v) {
           ? `<div class="card-progress">
                <span class="progress-dot">●</span> ${v.progress}
              </div>` : ''}
+        ${v.status === 'awaiting_review'
+          ? `<div class="card-progress">Transcript ready — review subtitles</div>` : ''}
         <div class="card-footer">
           ${statusBadge(v.status)}
           <div class="card-actions">
-            ${v.status === 'detected'
-              ? `<button class="btn btn-dark btn-sm"
-                   onclick="process(${v.id},this)"
-                   ${(isProcessing||!serverOnline)?'disabled':''}>▶ Process</button>`
-              : v.status === 'failed'
-              ? `<button class="btn btn-danger btn-sm"
-                   onclick="process(${v.id},this)"
-                   ${(isProcessing||!serverOnline)?'disabled':''}>↺ Retry</button>`
-              : v.status === 'completed'
-              ? `<button class="btn btn-green btn-sm"
-                   onclick="process(${v.id},this)"
-                   ${(isProcessing||!serverOnline)?'disabled':''}>↺ Re-run</button>`
-              : ''}
+            ${cardAction(v)}
             <button class="btn btn-play btn-sm"
               onclick="playVideo(${v.id},'raw','${escapeHtml(v.lesson_title || v.filepath.split('/').pop())}')">
               ▶ Raw</button>
@@ -538,12 +516,16 @@ function actionCell(v) {
     `).join('');
   }
 
-async function load() {
+  function openEditor(id, title) {
+    window.location.href =
+      `subtitle_editor.html?id=${id}&title=${encodeURIComponent(title)}`;
+  }
+
+  async function load() {
     try {
       const res = await fetch(API + '/videos');
       const videos = await res.json();
       serverOnline = true;
-
       isProcessing = videos.some(v => v.status === 'processing');
       const completedUncached = videos.filter(
         v => v.status === 'completed' && !versionCache[v.id]
@@ -553,12 +535,14 @@ async function load() {
         videos.filter(v => v.status === 'detected').length;
       document.getElementById('s-processing').textContent =
         videos.filter(v => v.status === 'processing').length;
+      document.getElementById('s-review').textContent =
+        videos.filter(v => v.status === 'awaiting_review').length;
       document.getElementById('s-completed').textContent =
         videos.filter(v => v.status === 'completed').length;
       document.getElementById('s-failed').textContent =
         videos.filter(v => v.status === 'failed').length;
       document.getElementById('subtitle').textContent =
-        `${videos.length} videos in system · auto-refreshes every few seconds ..`
+        `${videos.length} videos in system · auto-refreshes every few seconds`
         + (isProcessing ? ' · processing in progress' : '');
       renderTable(videos);
       renderCards(videos);
@@ -566,21 +550,19 @@ async function load() {
       serverOnline = false;
       document.getElementById('subtitle').innerHTML =
         '<span style="color:#cc2222;font-weight:600">⚠ Cannot reach backend — is the server running?</span>';
-      // Force re-render so buttons update to reflect offline state
       lastVideoJson = '';
       lastCardJson = '';
     }
   }
 
-async function process(id, btn) {
+  async function process(id, btn) {
     if (!serverOnline) return;
     btn.disabled = true;
     btn.textContent = 'Starting…';
     isProcessing = true;
     delete versionCache[id];
-    document.querySelectorAll(
-      'button.btn-dark, button.btn-green, button.btn-danger'
-    ).forEach(b => { if (b !== btn) b.disabled = true; });
+    document.querySelectorAll('button.btn-dark, button.btn-green, button.btn-danger')
+      .forEach(b => { if (b !== btn) b.disabled = true; });
     await fetch(API + '/process/' + id, { method: 'POST' });
     isProcessing = false;
     delete versionCache[id];
@@ -595,15 +577,16 @@ async function process(id, btn) {
       : `${API}/edited-path/${id}`;
     const res = await fetch(endpoint);
     const data = await res.json();
-    if (!data.path) {
-      alert('File not found.');
-      return;
-    }
+    if (!data.path) { alert('File not found.'); return; }
+
+    const displayTitle = type === 'raw'
+      ? title
+      : (data.filename || title);
 
     if (videoPlayer === 'browser') {
-      document.getElementById('playerTitle').textContent = title;
+      document.getElementById('playerTitle').textContent = displayTitle;
       document.getElementById('playerSubtitle').textContent =
-        type === 'raw' ? 'Raw video' : 'Edited version (latest)';
+        type === 'raw' ? 'Raw video' : 'Edited version';
       const video = document.getElementById('playerVideo');
       video.src = type === 'raw'
         ? `${API}/video-file/${id}`
@@ -620,18 +603,16 @@ async function process(id, btn) {
   }
 
   function closePlayer(e) {
-    if (e.target === document.getElementById('playerModal'))
-      closePlayerBtn();
+    if (e.target === document.getElementById('playerModal')) closePlayerBtn();
   }
 
   function closePlayerBtn() {
     const video = document.getElementById('playerVideo');
-    video.pause();
-    video.src = '';
+    video.pause(); video.src = '';
     document.getElementById('playerModal').classList.remove('open');
   }
 
-async function openFolder(key) {
+  async function openFolder(key) {
     if (!serverOnline) {
       alert('Server is not running — cannot open folder.\nStart the server first.');
       return;
@@ -639,7 +620,7 @@ async function openFolder(key) {
     await fetch(API + '/open-folder/' + key, { method: 'POST' });
   }
 
-async function clearCompleted() {
+  async function clearCompleted() {
     if (!serverOnline) {
       alert('Server is not running — cannot clear jobs.\nStart the server first.');
       return;
@@ -647,31 +628,22 @@ async function clearCompleted() {
     if (!confirm('Remove completed jobs from the list? This does not delete any video files.')) return;
     await fetch(API + '/videos/completed', { method: 'DELETE' });
     Object.keys(versionCache).forEach(k => delete versionCache[k]);
-    lastVideoJson = '';
-    lastCardJson = '';
+    lastVideoJson = ''; lastCardJson = '';
     load();
   }
 
   async function restartServer() {
     const btn = document.querySelector('#restartBanner button');
-    btn.disabled = true;
-    btn.textContent = 'Restarting…';
-    try {
-      await fetch(API + '/restart', { method: 'POST' });
-    } catch(e) {}
-    // Wait for server to come back up then reload
-    document.getElementById('subtitle').textContent =
-      'Restarting server…';
+    btn.disabled = true; btn.textContent = 'Restarting…';
+    try { await fetch(API + '/restart', { method: 'POST' }); } catch(e) {}
+    document.getElementById('subtitle').textContent = 'Restarting server…';
     setTimeout(async () => {
       for (let i = 0; i < 15; i++) {
         try {
           await fetch(API + '/health');
           document.getElementById('restartBanner').classList.remove('show');
-          load();
-          return;
-        } catch(e) {
-          await new Promise(r => setTimeout(r, 1000));
-        }
+          load(); return;
+        } catch(e) { await new Promise(r => setTimeout(r, 1000)); }
       }
       document.getElementById('subtitle').textContent =
         'Server did not restart — please restart manually.';
@@ -685,26 +657,17 @@ async function clearCompleted() {
     }
     const res = await fetch(API + '/config');
     const cfg = await res.json();
-    document.getElementById('cfg-raw').value =
-      cfg.folders.raw_videos || '';
-    document.getElementById('cfg-edited').value =
-      cfg.folders.edited_videos || '';
-    document.getElementById('cfg-temp').value =
-      cfg.folders.temp || '';
-    document.getElementById('cfg-filemanager').value =
-      cfg.file_manager || 'nautilus';
-    document.getElementById('cfg-videoplayer').value =
-      cfg.video_player || 'browser';
-    document.getElementById('cfg-font').value =
-      cfg.captions.font || 'Liberation Sans';
-    document.getElementById('cfg-size').value =
-      cfg.captions.size || 14;
-    document.getElementById('cfg-outline').value =
-      cfg.captions.outline || 2;
-    document.getElementById('cfg-margin').value =
-      cfg.captions.margin_bottom || 20;
-    document.getElementById('cfg-whisper').value =
-      cfg.whisper_model || 'base';
+    document.getElementById('cfg-raw').value = cfg.folders.raw_videos || '';
+    document.getElementById('cfg-edited').value = cfg.folders.edited_videos || '';
+    document.getElementById('cfg-temp').value = cfg.folders.temp || '';
+    document.getElementById('cfg-filemanager').value = cfg.file_manager || 'nautilus';
+    document.getElementById('cfg-videoplayer').value = cfg.video_player || 'browser';
+    document.getElementById('cfg-font').value = cfg.captions.font || 'Liberation Sans';
+    document.getElementById('cfg-size').value = cfg.captions.size || 14;
+    document.getElementById('cfg-outline').value = cfg.captions.outline || 2;
+    document.getElementById('cfg-margin').value = cfg.captions.margin_bottom || 20;
+    document.getElementById('cfg-whisper').value = cfg.whisper_model || 'base';
+    document.getElementById('cfg-review').value = String(cfg.subtitle_review !== false);
     document.getElementById('settingsOverlay').classList.add('open');
   }
 
@@ -713,8 +676,7 @@ async function clearCompleted() {
   }
 
   function closeSettingsIfOutside(e) {
-    if (e.target === document.getElementById('settingsOverlay'))
-      closeSettings();
+    if (e.target === document.getElementById('settingsOverlay')) closeSettings();
   }
 
   async function browseTo(inputId) {
@@ -735,39 +697,27 @@ async function clearCompleted() {
       document.getElementById('cfg-edited').value !== cfg.folders.edited_videos ||
       document.getElementById('cfg-temp').value !== cfg.folders.temp ||
       newModel !== cfg.whisper_model;
-
     cfg.folders.raw_videos = newRaw;
-    cfg.folders.edited_videos =
-      document.getElementById('cfg-edited').value;
+    cfg.folders.edited_videos = document.getElementById('cfg-edited').value;
     cfg.folders.temp = document.getElementById('cfg-temp').value;
     cfg.file_manager = document.getElementById('cfg-filemanager').value;
     cfg.video_player = document.getElementById('cfg-videoplayer').value;
     cfg.captions.font = document.getElementById('cfg-font').value;
-    cfg.captions.size =
-      parseInt(document.getElementById('cfg-size').value);
-    cfg.captions.outline =
-      parseInt(document.getElementById('cfg-outline').value);
-    cfg.captions.margin_bottom =
-      parseInt(document.getElementById('cfg-margin').value);
+    cfg.captions.size = parseInt(document.getElementById('cfg-size').value);
+    cfg.captions.outline = parseInt(document.getElementById('cfg-outline').value);
+    cfg.captions.margin_bottom = parseInt(document.getElementById('cfg-margin').value);
     cfg.whisper_model = document.getElementById('cfg-whisper').value;
-
+    cfg.subtitle_review = document.getElementById('cfg-review').value === 'true';
     await fetch(API + '/config', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(cfg)
     });
-
-    // Update local video player setting immediately
     videoPlayer = cfg.video_player;
-
     closeSettings();
-
-    if (needsRestart) {
-      document.getElementById('restartBanner').classList.add('show');
-    }
+    if (needsRestart) document.getElementById('restartBanner').classList.add('show');
   }
 
-  // Load video player preference on startup
   async function loadConfig() {
     try {
       const res = await fetch(API + '/config');

@@ -4,16 +4,41 @@
     "edited_videos": "/home/davidowoh/SelfCraft Media/Edited Videos",
     "temp": "/home/davidowoh/SelfCraft Media/Temp"
   },
+  "review_folder": "/home/davidowoh/SelfCraft Media/Review",
+  "subtitle_review": true,
   "file_manager": "nautilus",
   "video_player": "browser",
   "captions": {
-    "font": "Liberation Sans",
-    "size": 14,
-    "colour": "&H00FFFFFF",
-    "outline_colour": "&H00000000",
-    "outline": 2,
-    "shadow": 1,
-    "margin_bottom": 20
+    "lesson": {
+      "font": "Liberation Sans",
+      "size": 14,
+      "colour": "&H00FFFFFF",
+      "outline_colour": "&H00000000",
+      "outline": 2,
+      "shadow": 1,
+      "margin_bottom": 20,
+      "position": "bottom"
+    },
+    "reel": {
+      "font": "Liberation Sans",
+      "size": 16,
+      "colour": "&H00FFFFFF",
+      "outline_colour": "&H00000000",
+      "outline": 2,
+      "shadow": 1,
+      "margin_bottom": 20,
+      "position": "bottom"
+    },
+    "testimonial": {
+      "font": "Liberation Sans",
+      "size": 16,
+      "colour": "&H00FFFFFF",
+      "outline_colour": "&H00000000",
+      "outline": 2,
+      "shadow": 1,
+      "margin_bottom": 20,
+      "position": "bottom"
+    }
   },
   "whisper_model": "base",
   "max_parallel_jobs": 1
