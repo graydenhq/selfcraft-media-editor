@@ -8,36 +8,36 @@
   "subtitle_review": true,
   "file_manager": "nautilus",
   "video_player": "browser",
-  "captions": {
+"captions": {
     "lesson": {
       "font": "Liberation Sans",
-      "size": 16,
+      "size": 5,
       "outline": 2,
+      "shadow": 1,
       "margin_bottom": 35,
       "position": "bottom",
       "colour": "&H00FFFFFF",
-      "outline_colour": "&H00000000",
-      "shadow": 1
+      "outline_colour": "&H00000000"
     },
     "reel": {
       "font": "Liberation Sans",
-      "size": 16,
-      "colour": "&H00FFFFFF",
-      "outline_colour": "&H00000000",
+      "size": 5,
       "outline": 2,
       "shadow": 1,
-      "margin_bottom": 20,
-      "position": "bottom"
+      "margin_bottom": 35,
+      "position": "bottom",
+      "colour": "&H00FFFFFF",
+      "outline_colour": "&H00000000"
     },
     "testimonial": {
       "font": "Liberation Sans",
-      "size": 16,
-      "colour": "&H00FFFFFF",
-      "outline_colour": "&H00000000",
+      "size": 5,
       "outline": 2,
       "shadow": 1,
-      "margin_bottom": 20,
-      "position": "bottom"
+      "margin_bottom": 35,
+      "position": "bottom",
+      "colour": "&H00FFFFFF",
+      "outline_colour": "&H00000000"
     }
   },
   "whisper_model": "base",

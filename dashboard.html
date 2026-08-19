@@ -3,6 +3,7 @@
 <head>
   <title>SME Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: sans-serif; background: #f0f0f0; padding: 1.5rem; }
@@ -11,8 +12,12 @@
              justify-content: space-between; flex-wrap: wrap;
              gap: 0.75rem; margin-bottom: 1.25rem; }
     .header-left { display: flex; align-items: center; gap: 0.75rem; }
-    .header-left img { height: 40px; width: auto; border-radius: 6px; }
-    h1 { color: #1a1a1a; font-size: 1.4rem; }
+    .header-left img { height: 40px; width: 40px; border-radius: 50%;
+                       border: 2px solid #ccc; object-fit: cover; }
+    .header-title h1 { color: #1a1a1a; font-size: 1.4rem; }
+    .header-title .version { font-size: 0.72rem; color: #999;
+                              font-weight: normal; margin-left: 0.4rem;
+                              vertical-align: middle; }
     .subtitle { color: #666; font-size: 0.82rem; margin-top: 0.2rem; }
     .header-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 
@@ -60,7 +65,7 @@
             box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
     th { background: #1a1a1a; color: white; padding: 11px 14px; text-align: left;
          font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em;
-         white-space: nowrap; }
+         white-space: nowrap; resize: horizontal; overflow: auto; }
     td { padding: 11px 14px; border-bottom: 1px solid #eee;
          font-size: 0.85rem; vertical-align: middle; }
     tr:last-child td { border-bottom: none; }
@@ -69,7 +74,8 @@
     tr.row-awaiting_review td { background: #fff8f0; }
 
     .status { font-weight: bold; font-size: 0.78rem;
-              padding: 3px 8px; border-radius: 10px; white-space: nowrap; }
+              padding: 3px 8px; border-radius: 10px; white-space: nowrap;
+              text-transform: capitalize; }
     .status-detected { background: #eee; color: #666; }
     .status-processing { background: #fff3e0; color: #e67e00; }
     .status-awaiting_review { background: #fff3e0; color: #e67e00; }
@@ -77,6 +83,8 @@
     .status-failed { background: #fdecea; color: #cc2222; }
 
     .date-cell { font-size: 0.75rem; color: #999; white-space: nowrap; }
+    .num-cell { font-size: 0.75rem; color: #bbb; width: 32px;
+                text-align: center; user-select: none; }
     .progress-cell { font-size: 0.78rem; color: #e67e00;
                      font-style: italic; max-width: 180px; }
     .progress-dot { display: inline-block; animation: blink 1s infinite; }
@@ -236,8 +244,8 @@
         </select>
       </div>
       <div class="settings-group">
-        <label>Font Size</label>
-        <input type="number" id="cfg-size" min="8" max="48" step="1">
+        <label>Size <span style="font-weight:normal;color:#999">(% of height, try 4–7)</span></label>
+        <input type="number" id="cfg-size" min="1" max="20" step="0.5">
       </div>
     </div>
     <div class="settings-row">
@@ -289,8 +297,8 @@
 <header>
   <div class="header-left">
     <img src="logo.jpeg" alt="SelfCraft" onerror="this.style.display='none'">
-    <div>
-      <h1>SelfCraft Media Editor</h1>
+    <div class="header-title">
+      <h1>SelfCraft Media Editor <span class="version">v1.1</span></h1>
       <div class="subtitle" id="subtitle">Connecting…</div>
     </div>
   </div>
@@ -329,6 +337,7 @@
   <table>
     <thead>
       <tr>
+        <th style="width:36px">#</th>
         <th>Lesson / File</th>
         <th>Content Info</th>
         <th>Status</th>
@@ -360,7 +369,8 @@
   }
 
   function statusBadge(s) {
-    const label = s === 'awaiting_review' ? 'review needed' : s;
+    const label = s === 'awaiting_review' ? 'Review Needed' : 
+                  s.charAt(0).toUpperCase() + s.slice(1);
     return `<span class="status status-${s}">${label}</span>`;
   }
 
@@ -424,8 +434,8 @@
                    onclick="process(${v.id},this)"${dis}>▶ Process</button>`;
     else if (v.status === 'awaiting_review')
       mainBtn = `<button class="btn btn-warn"
-                   onclick="openEditor(${v.id},'${escapeHtml(v.lesson_title || v.filepath.split('/').pop())}')">
-                   ✎ Edit Subtitles</button>`;
+                   onclick="openEditor(${v.id},'${escapeHtml(v.lesson_title || v.filepath.split('/').pop())}')"
+                   ${!serverOnline ? 'disabled' : ''}>✎ Edit Subtitles</button>`;
     else if (v.status === 'failed')
       mainBtn = `<button class="btn btn-danger"
                    onclick="process(${v.id},this)"${dis}>↺ Retry</button>`;
@@ -443,8 +453,8 @@
                 onclick="process(${v.id},this)"${dis}>▶ Process</button>`;
     if (v.status === 'awaiting_review')
       return `<button class="btn btn-warn btn-sm"
-                onclick="openEditor(${v.id},'${escapeHtml(v.lesson_title || v.filepath.split('/').pop())}')">
-                ✎ Edit Subtitles</button>`;
+                onclick="openEditor(${v.id},'${escapeHtml(v.lesson_title || v.filepath.split('/').pop())}')"
+                ${!serverOnline ? 'disabled' : ''}>✎ Edit Subtitles</button>`;
     if (v.status === 'failed')
       return `<button class="btn btn-danger btn-sm"
                 onclick="process(${v.id},this)"${dis}>↺ Retry</button>`;
@@ -460,11 +470,12 @@
     lastVideoJson = newJson;
     const tbody = document.getElementById('queue');
     if (!videos.length) {
-      tbody.innerHTML = '<tr><td colspan="6" class="empty">No videos detected yet. Drop a video into your watched folder.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" class="empty">No videos detected yet. Drop a video into your watched folder.</td></tr>';
       return;
     }
-    tbody.innerHTML = videos.map(v => `
+    tbody.innerHTML = videos.map((v, i) => `
       <tr class="row-${v.status}">
+        <td class="num-cell">${i + 1}</td>
         <td>${v.lesson_title || v.filepath.split('/').pop()}</td>
         <td>${contentInfo(v)}</td>
         <td>${statusBadge(v.status)}</td>
@@ -484,9 +495,9 @@
       container.innerHTML = '<div class="card"><p class="empty">No videos yet.</p></div>';
       return;
     }
-    container.innerHTML = videos.map(v => `
+    container.innerHTML = videos.map((v, i) => `
       <div class="card card-${v.status}">
-        <div class="card-title">${v.lesson_title || v.filepath.split('/').pop()}</div>
+        <div class="card-title">${i + 1}. ${v.lesson_title || v.filepath.split('/').pop()}</div>
         <div class="card-meta">
           ${contentInfo(v)}<br>
           🕐 ${formatDate(v.date_added)}
@@ -578,11 +589,7 @@
     const res = await fetch(endpoint);
     const data = await res.json();
     if (!data.path) { alert('File not found.'); return; }
-
-    const displayTitle = type === 'raw'
-      ? title
-      : (data.filename || title);
-
+    const displayTitle = type === 'raw' ? title : (data.filename || title);
     if (videoPlayer === 'browser') {
       document.getElementById('playerTitle').textContent = displayTitle;
       document.getElementById('playerSubtitle').textContent =
@@ -662,10 +669,15 @@
     document.getElementById('cfg-temp').value = cfg.folders.temp || '';
     document.getElementById('cfg-filemanager').value = cfg.file_manager || 'nautilus';
     document.getElementById('cfg-videoplayer').value = cfg.video_player || 'browser';
-    document.getElementById('cfg-font').value = cfg.captions.font || 'Liberation Sans';
-    document.getElementById('cfg-size').value = cfg.captions.size || 14;
-    document.getElementById('cfg-outline').value = cfg.captions.outline || 2;
-    document.getElementById('cfg-margin').value = cfg.captions.margin_bottom || 20;
+
+    // Caption settings — handle per-type format
+    const captions = cfg.captions;
+    const lessonCaptions = captions.lesson || captions;
+    document.getElementById('cfg-font').value = lessonCaptions.font || 'Liberation Sans';
+    document.getElementById('cfg-size').value = lessonCaptions.size || 5;
+    document.getElementById('cfg-outline').value = lessonCaptions.outline || 2;
+    document.getElementById('cfg-margin').value = lessonCaptions.margin_bottom || 20;
+
     document.getElementById('cfg-whisper').value = cfg.whisper_model || 'base';
     document.getElementById('cfg-review').value = String(cfg.subtitle_review !== false);
     document.getElementById('settingsOverlay').classList.add('open');
@@ -697,17 +709,32 @@
       document.getElementById('cfg-edited').value !== cfg.folders.edited_videos ||
       document.getElementById('cfg-temp').value !== cfg.folders.temp ||
       newModel !== cfg.whisper_model;
+
     cfg.folders.raw_videos = newRaw;
     cfg.folders.edited_videos = document.getElementById('cfg-edited').value;
     cfg.folders.temp = document.getElementById('cfg-temp').value;
     cfg.file_manager = document.getElementById('cfg-filemanager').value;
     cfg.video_player = document.getElementById('cfg-videoplayer').value;
-    cfg.captions.font = document.getElementById('cfg-font').value;
-    cfg.captions.size = parseInt(document.getElementById('cfg-size').value);
-    cfg.captions.outline = parseInt(document.getElementById('cfg-outline').value);
-    cfg.captions.margin_bottom = parseInt(document.getElementById('cfg-margin').value);
-    cfg.whisper_model = document.getElementById('cfg-whisper').value;
+    cfg.whisper_model = newModel;
     cfg.subtitle_review = document.getElementById('cfg-review').value === 'true';
+
+    // Update all caption types with the same settings from the panel
+    const newCaptionStyle = {
+      font: document.getElementById('cfg-font').value,
+      size: parseFloat(document.getElementById('cfg-size').value),
+      outline: parseInt(document.getElementById('cfg-outline').value),
+      margin_bottom: parseInt(document.getElementById('cfg-margin').value),
+      position: cfg.captions?.lesson?.position || 'bottom',
+      colour: cfg.captions?.lesson?.colour || '&H00FFFFFF',
+      outline_colour: cfg.captions?.lesson?.outline_colour || '&H00000000',
+      shadow: 1
+    };
+    cfg.captions = {
+      lesson: { ...newCaptionStyle },
+      reel: { ...newCaptionStyle },
+      testimonial: { ...newCaptionStyle }
+    };
+
     await fetch(API + '/config', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

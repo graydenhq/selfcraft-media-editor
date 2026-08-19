@@ -43,13 +43,22 @@ def burn_captions(input_path, srt_path, output_path,
     if style is None:
         style = get_caption_style('lesson')
 
+    # size is stored as % of video height
+    # libass FontSize uses a 288 DPI reference scale
+    size_pct = style.get('size', 5)
+    ffmpeg_font_size = max(6, round((size_pct / 100) * 288))
+    
+    # margin_bottom is in canvas pixels — convert to libass points
+    # using same 288 DPI scale relative to a 1080p reference height
+    margin_px = style.get('margin_bottom', 20)
+    margin_v = max(0, round((margin_px / 1080) * 288))
+
     position = style.get('position', 'bottom')
     alignment = 6 if position == 'top' else 5 if position == 'middle' else 2
-    margin_v = style.get('margin_bottom', 20)
 
     style_str = (
         f"FontName={style['font']}"
-        f",FontSize={style['size']}"
+        f",FontSize={ffmpeg_font_size}"
         f",PrimaryColour={style['colour']}"
         f",OutlineColour={style['outline_colour']}"
         f",Outline={style['outline']}"
