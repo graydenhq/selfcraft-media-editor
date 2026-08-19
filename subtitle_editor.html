@@ -121,7 +121,7 @@
     </div>
   </div>
   <div class="header-actions">
-    <button class="btn btn-save" onclick="saveOnly()">💾 Save</button>
+    <button class="btn btn-save" onclick="saveOnly()">💾 Save & Exit</button>
     <button class="btn btn-approve" id="approveBtn" onclick="approveAndRender()">
       ✓ Approve & Render
     </button>
@@ -206,12 +206,12 @@
         </div>
 
         <div class="preset-row">
-          <span class="preset-label">
-            Save as default for <span id="defaultLabel">this type</span>
-          </span>
-          <button class="btn btn-preset" onclick="setDefault()">
-            Save preset
-          </button>
+          <label style="display:flex;align-items:center;gap:0.5rem;
+                         font-size:0.75rem;color:#888;cursor:pointer;">
+            <span>Save as default for <span id="defaultLabel">this type</span></span>
+            <input type="checkbox" id="saveDefaultCheck"
+                   style="width:16px;height:16px;cursor:pointer;accent-color:#1a6fcc;">
+          </label>
         </div>
         <div class="saved-note" id="savedNote"></div>
       </div>
@@ -436,7 +436,6 @@
     setTimeout(() => { note.textContent = ''; }, 3000);
   }
 
-  // --- Save ---
   async function saveOnly() {
     const srt = buildSrt(captions);
     await fetch(`${API}/srt/${videoId}`, {
@@ -449,15 +448,18 @@
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(getCurrentStyle())
     });
-    const btn = document.querySelector('.btn-save');
-    const orig = btn.textContent;
-    btn.textContent = '✓ Saved';
-    btn.style.background = '#2a9d2a';
-    setTimeout(() => { btn.textContent = orig; btn.style.background = ''; }, 2000);
+    if (document.getElementById('saveDefaultCheck').checked) {
+      await setDefault();
+    }
+    goBack();
   }
 
   async function approveAndRender() {
     const srt = buildSrt(captions);
+    if (document.getElementById('saveDefaultCheck').checked) {
+      await setDefault();
+      document.getElementById('saveDefaultCheck').checked = false;
+    }
     await fetch(`${API}/srt/${videoId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

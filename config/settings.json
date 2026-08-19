@@ -11,13 +11,13 @@
   "captions": {
     "lesson": {
       "font": "Liberation Sans",
-      "size": 14,
+      "size": 16,
+      "outline": 2,
+      "margin_bottom": 35,
+      "position": "bottom",
       "colour": "&H00FFFFFF",
       "outline_colour": "&H00000000",
-      "outline": 2,
-      "shadow": 1,
-      "margin_bottom": 20,
-      "position": "bottom"
+      "shadow": 1
     },
     "reel": {
       "font": "Liberation Sans",

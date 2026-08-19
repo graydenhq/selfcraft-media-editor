@@ -170,17 +170,27 @@ def approve_and_render(video_id: int):
     if not video:
         return {"error": "Video not found"}
     from database.db import get_srt_path
+    from app.core.config import get_review_folder
     srt_path = get_srt_path(video_id)
     if not srt_path or not os.path.exists(srt_path):
         return {"error": "SRT file not found — re-process this video"}
+
+    # Find the resized video in the Review folder
+    base_name = os.path.splitext(os.path.basename(video[1]))[0]
+    review_folder = get_review_folder()
+    resized_path = os.path.join(review_folder, f"{base_name}_resized.mp4")
+    if not os.path.exists(resized_path):
+        return {"error": "Resized video not found — re-process this video"}
+
     update_status(video_id, "processing")
     update_progress(video_id, "Rendering approved subtitles…")
-    # Get any custom style saved from the editor
     custom_style = _render_styles.pop(video_id, None)
     try:
         from app.workflow.orchestrator import process_phase2
-        output = process_phase2(video[1], srt_path, video_id=video_id,
-                                caption_style=custom_style)
+        output = process_phase2(
+            video[1], srt_path, resized_path,
+            video_id=video_id, caption_style=custom_style
+        )
         update_status(video_id, "completed")
         update_progress(video_id, None)
         return {"status": "completed", "output": output}
@@ -248,9 +258,21 @@ def pick_folder():
 @app.get("/video-file/{video_id}")
 def serve_video(video_id: int):
     from fastapi.responses import FileResponse
+    from fastapi import HTTPException
+    from app.core.config import get_review_folder
     video = get_video_by_id(video_id)
-    if not video or not os.path.exists(video[1]):
-        from fastapi import HTTPException
+    if not video:
+        raise HTTPException(status_code=404, detail="File not found")
+
+    # If a resized version exists in Review folder, serve that instead
+    base_name = os.path.splitext(os.path.basename(video[1]))[0]
+    review_folder = get_review_folder()
+    resized_path = os.path.join(review_folder, f"{base_name}_resized.mp4")
+    if os.path.exists(resized_path):
+        return FileResponse(resized_path, media_type="video/mp4")
+
+    # Otherwise serve the raw original
+    if not os.path.exists(video[1]):
         raise HTTPException(status_code=404, detail="File not found")
     return FileResponse(video[1], media_type="video/mp4")
 

@@ -1,20 +1,51 @@
 import subprocess
+import os
+import re
+import threading
 from app.core.config import get_caption_style
 
-def burn_captions(input_path, srt_path, output_path, style=None):
+def get_video_duration(video_path):
+    result = subprocess.run([
+        'ffprobe', '-v', 'error',
+        '-show_entries', 'format=duration',
+        '-of', 'default=noprint_wrappers=1:nokey=1',
+        video_path
+    ], capture_output=True, text=True)
+    try:
+        return float(result.stdout.strip())
+    except:
+        return None
+
+def _run_ffmpeg_with_progress(cmd, duration, progress_callback):
+    """Run an FFmpeg command and call progress_callback(pct) as it runs."""
+    process = subprocess.Popen(
+        cmd,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.PIPE,
+        universal_newlines=True
+    )
+    for line in process.stderr:
+        if progress_callback and duration:
+            match = re.search(r'time=(\d+):(\d+):([\d.]+)', line)
+            if match:
+                h, m, s = match.groups()
+                elapsed = int(h)*3600 + int(m)*60 + float(s)
+                pct = min(99, int((elapsed / duration) * 100))
+                progress_callback(pct)
+    process.wait()
+    if process.returncode != 0:
+        raise subprocess.CalledProcessError(process.returncode, cmd)
+    if progress_callback:
+        progress_callback(100)
+
+def burn_captions(input_path, srt_path, output_path,
+                  style=None, progress_callback=None):
     if style is None:
         style = get_caption_style('lesson')
 
     position = style.get('position', 'bottom')
-    if position == 'top':
-        alignment = 6
-        margin_v = style.get('margin_bottom', 20)
-    elif position == 'middle':
-        alignment = 5
-        margin_v = 0
-    else:  # bottom
-        alignment = 2
-        margin_v = style.get('margin_bottom', 20)
+    alignment = 6 if position == 'top' else 5 if position == 'middle' else 2
+    margin_v = style.get('margin_bottom', 20)
 
     style_str = (
         f"FontName={style['font']}"
@@ -28,21 +59,37 @@ def burn_captions(input_path, srt_path, output_path, style=None):
     )
     safe_srt = srt_path.replace(':', '\\:')
     subtitle_filter = f"subtitles={safe_srt}:force_style='{style_str}'"
-    subprocess.run([
+
+    cmd = [
         'ffmpeg', '-y', '-i', input_path,
         '-vf', subtitle_filter,
         '-c:a', 'copy',
         output_path
-    ], check=True)
+    ]
+
+    if progress_callback:
+        duration = get_video_duration(input_path)
+        _run_ffmpeg_with_progress(cmd, duration, progress_callback)
+    else:
+        subprocess.run(cmd, check=True)
+
     print(f"Captions burned: {output_path}")
 
-def export_final(input_path, output_path, target='landscape'):
+def export_final(input_path, output_path, target='landscape',
+                 progress_callback=None):
     scale = '1920:1080' if target == 'landscape' else '1080:1920'
-    subprocess.run([
+    cmd = [
         'ffmpeg', '-y', '-i', input_path,
         '-vf', f'scale={scale}',
         '-c:v', 'libx264', '-preset', 'medium', '-crf', '23',
         '-c:a', 'aac', '-b:a', '192k',
         output_path
-    ], check=True)
+    ]
+
+    if progress_callback:
+        duration = get_video_duration(input_path)
+        _run_ffmpeg_with_progress(cmd, duration, progress_callback)
+    else:
+        subprocess.run(cmd, check=True)
+
     print(f"Exported: {output_path}")

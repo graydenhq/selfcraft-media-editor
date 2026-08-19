@@ -1,15 +1,17 @@
 import os
 import shutil
+from app.media.render import burn_captions, export_final, get_video_duration
 from app.ai.transcribe import transcribe, write_srt
 from app.ai.silence import remove_silence
 from app.ai.speaker import detect_speaker_name
-from app.media.render import burn_captions, export_final
 from app.export.naming import get_output_path
 from app.logging.logger import get_logger
-from app.core.config import get_folders, get_review_folder, subtitle_review_enabled
+from app.core.config import (get_folders, get_review_folder,
+                              subtitle_review_enabled, get_caption_style)
 from database.db import update_progress, set_srt_path
 
 log = get_logger("orchestrator")
+
 
 def get_template(video_path):
     if "Teaching Reels" in video_path:
@@ -19,10 +21,12 @@ def get_template(video_path):
     else:
         return "lesson"
 
+
 def process_phase1(video_path, video_id=None):
     """
-    Phase 1: Transcribe and optionally pause for subtitle review.
-    Returns 'awaiting_review' if review is enabled, or calls phase2 directly.
+    Phase 1: Transcribe, remove silence, resize.
+    If review enabled: pause for subtitle editing against the resized video.
+    If review disabled: call phase2 directly.
     """
     folders = get_folders()
     TEMP_FOLDER = folders['temp']
@@ -38,27 +42,60 @@ def process_phase1(video_path, video_id=None):
             update_progress(video_id, msg)
 
     base_name = os.path.splitext(os.path.basename(video_path))[0]
+    template = get_template(video_path)
 
     # Step 1: Transcribe
     report("Transcribing audio with Whisper AI…")
     result = transcribe(video_path)
-
-    # Save SRT to review folder so it persists
     srt_path = os.path.join(REVIEW_FOLDER, f"{base_name}.srt")
     write_srt(result, srt_path)
-
     if video_id:
         set_srt_path(video_id, srt_path)
 
+    # Step 2: Speaker detection for testimonials
+    if template == "testimonial":
+        report("Detecting speaker name from transcript…")
+        speaker_name, confidence = detect_speaker_name(result['text'])
+        if speaker_name:
+            report(f"Speaker identified: {speaker_name}")
+        else:
+            report("Speaker not detected — continuing without name overlay")
+
+    # Step 3: Remove silence
+    report("Removing silence from video…")
+    silence_removed_path = os.path.join(TEMP_FOLDER, f"{base_name}_nosilence.mp4")
+    actual_input = remove_silence(video_path, silence_removed_path, TEMP_FOLDER)
+
+    # Step 4: Resize to final resolution
+    target = 'landscape' if template == 'lesson' else 'reel'
+    # Store resized video in Review folder so it survives the review period
+    resized_path = os.path.join(REVIEW_FOLDER, f"{base_name}_resized.mp4")
+
+    def resize_progress(pct):
+        report(f"Resizing video — {pct}%")
+
+    report("Resizing video — 0%")
+    export_final(actual_input, resized_path, target=target,
+                 progress_callback=resize_progress)
+
+    # Clean up silence-removed temp file now that resize is done
+    if os.path.exists(silence_removed_path):
+        os.remove(silence_removed_path)
+
     if subtitle_review_enabled():
-        report("Transcript ready — awaiting subtitle review…")
+        report("Ready for subtitle review…")
         log.info(f"Awaiting review: {srt_path}")
         return 'awaiting_review'
     else:
-        return process_phase2(video_path, srt_path, video_id)
+        return process_phase2(video_path, srt_path, resized_path, video_id)
 
 
-def process_phase2(video_path, srt_path, video_id=None, caption_style=None):
+def process_phase2(video_path, srt_path, resized_path, video_id=None,
+                   caption_style=None):
+    """
+    Phase 2: Burn captions onto the already-resized video and save.
+    Called after subtitle review is approved (or immediately if disabled).
+    """
     folders = get_folders()
     EDITED_FOLDER = folders['edited_videos']
     TEMP_FOLDER = folders['temp']
@@ -74,41 +111,27 @@ def process_phase2(video_path, srt_path, video_id=None, caption_style=None):
     base_name = os.path.splitext(os.path.basename(video_path))[0]
     template = get_template(video_path)
 
-    if template == "testimonial":
-        report("Detecting speaker name from transcript…")
-        from app.ai.speaker import detect_speaker_name
-        with open(srt_path, 'r') as f:
-            text = f.read()
-        speaker_name, confidence = detect_speaker_name(text)
-        if speaker_name:
-            report(f"Speaker identified: {speaker_name}")
-        else:
-            report("Speaker not detected — continuing without name overlay")
-
-    report("Removing silence from video…")
-    silence_removed_path = os.path.join(TEMP_FOLDER, f"{base_name}_nosilence.mp4")
-    actual_input = remove_silence(video_path, silence_removed_path, TEMP_FOLDER)
-
-    report("Resizing video to target resolution…")
-    target = 'landscape' if template == 'lesson' else 'reel'
-    resized_path = os.path.join(TEMP_FOLDER, f"{base_name}_resized.mp4")
-    export_final(actual_input, resized_path, target=target)
-
-    report("Burning captions onto video…")
-    # Use custom style from editor if provided, otherwise use config default
     if caption_style is None:
         caption_style = get_caption_style(template)
+
     captioned_path = os.path.join(TEMP_FOLDER, f"{base_name}_captioned.mp4")
-    burn_captions(resized_path, srt_path, captioned_path, style=caption_style)
+
+    def caption_progress(pct):
+        report(f"Burning captions — {pct}%")
+
+    report("Burning captions — 0%")
+    burn_captions(resized_path, srt_path, captioned_path,
+                  style=caption_style,
+                  progress_callback=caption_progress)
 
     report("Saving to Edited Videos…")
     output_path = get_output_path(video_path, EDITED_FOLDER)
     shutil.move(captioned_path, output_path)
 
-    report("Cleaning up temporary files…")
-    if os.path.exists(silence_removed_path):
-        os.remove(silence_removed_path)
-    os.remove(resized_path)
+    # Clean up review folder files
+    report("Cleaning up…")
+    if os.path.exists(resized_path):
+        os.remove(resized_path)
     if os.path.exists(srt_path):
         os.remove(srt_path)
 
@@ -116,6 +139,5 @@ def process_phase2(video_path, srt_path, video_id=None, caption_style=None):
     return output_path
 
 
-# Keep backward compatibility
 def process_video(video_path, video_id=None):
     return process_phase1(video_path, video_id)
