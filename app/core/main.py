@@ -14,6 +14,7 @@ from app.media.metadata import extract_metadata
 from app.workflow.orchestrator import process_video
 from app.core.config import load_config, get_folders, get_file_manager
 from app.export.naming import get_next_version_label
+import json as _json
 
 class VideoHandler(FileSystemEventHandler):
     def on_created(self, event):
@@ -175,7 +176,6 @@ def approve_and_render(video_id: int):
     if not srt_path or not os.path.exists(srt_path):
         return {"error": "SRT file not found — re-process this video"}
 
-    # Find the resized video in the Review folder
     base_name = os.path.splitext(os.path.basename(video[1]))[0]
     review_folder = get_review_folder()
     resized_path = os.path.join(review_folder, f"{base_name}_resized.mp4")
@@ -184,7 +184,14 @@ def approve_and_render(video_id: int):
 
     update_status(video_id, "processing")
     update_progress(video_id, "Rendering approved subtitles…")
-    custom_style = _render_styles.pop(video_id, None)
+
+    # Load style from disk
+    style_path = _style_path(video_id)
+    custom_style = None
+    if os.path.exists(style_path):
+        with open(style_path, 'r') as f:
+            custom_style = _json.load(f)
+
     try:
         from app.workflow.orchestrator import process_phase2
         output = process_phase2(
@@ -193,6 +200,9 @@ def approve_and_render(video_id: int):
         )
         update_status(video_id, "completed")
         update_progress(video_id, None)
+        # Clean up style file
+        if os.path.exists(style_path):
+            os.remove(style_path)
         return {"status": "completed", "output": output}
     except Exception as e:
         update_status(video_id, "failed")
@@ -385,22 +395,39 @@ def save_caption_style(video_type: str, style: dict):
 
 @app.get("/caption-style/{video_id}")
 def get_video_caption_style(video_id: int):
-    from app.core.config import get_caption_style
+    from app.core.config import get_caption_style, bgr_to_rgb
     from app.workflow.orchestrator import get_template
     video = get_video_by_id(video_id)
     if not video:
-        return get_caption_style('lesson')
-    template = get_template(video[1])
-    return get_caption_style(template)
+        style = get_caption_style('lesson')
+    else:
+        template = get_template(video[1])
+        style = get_caption_style(template)
+    # Convert BGR colors to HTML for the browser
+    result = dict(style)
+    result['colour_html'] = bgr_to_rgb(style.get('colour', '&H00FFFFFF'))
+    result['outline_colour_html'] = bgr_to_rgb(
+        style.get('outline_colour', '&H00000000'))
+    return result
 
 # In-memory store for per-render caption styles
 _render_styles = {}
 
+def _style_path(video_id: int) -> str:
+    from app.core.config import get_review_folder
+    return os.path.join(get_review_folder(), f"style_{video_id}.json")
+
 @app.post("/srt-style/{video_id}")
 def save_render_style(video_id: int, style: dict):
-    _render_styles[video_id] = style
+    path = _style_path(video_id)
+    with open(path, 'w') as f:
+        _json.dump(style, f)
     return {"status": "saved"}
 
 @app.get("/srt-style/{video_id}")
 def get_render_style(video_id: int):
-    return _render_styles.get(video_id, {})
+    path = _style_path(video_id)
+    if os.path.exists(path):
+        with open(path, 'r') as f:
+            return _json.load(f)
+    return {}

@@ -37,30 +37,68 @@ def _run_ffmpeg_with_progress(cmd, duration, progress_callback):
         raise subprocess.CalledProcessError(process.returncode, cmd)
     if progress_callback:
         progress_callback(100)
+def _bgr_to_rgb(bgr_hex):
+    """Convert FFmpeg BGR hex (&H00RRGGBB) to HTML RGB (#rrggbb)."""
+    bgr_hex = bgr_hex.replace('&H', '').replace('&h', '')
+    if len(bgr_hex) == 8:
+        bgr_hex = bgr_hex[2:]  # strip alpha
+    if len(bgr_hex) == 6:
+        b = bgr_hex[0:2]
+        g = bgr_hex[2:4]
+        r = bgr_hex[4:6]
+        return f'#{r}{g}{b}'
+    return '#ffffff'
+
+def _rgb_to_bgr(rgb_hex):
+    """Convert HTML RGB (#rrggbb) to FFmpeg BGR hex (&H00BBGGRR)."""
+    rgb_hex = rgb_hex.lstrip('#')
+    if len(rgb_hex) == 6:
+        r = rgb_hex[0:2]
+        g = rgb_hex[2:4]
+        b = rgb_hex[4:6]
+        return f'&H00{b}{g}{r}'
+    return '&H00FFFFFF'
 
 def burn_captions(input_path, srt_path, output_path,
                   style=None, progress_callback=None):
     if style is None:
         style = get_caption_style('lesson')
 
-    # size is stored as % of video height
-    # libass FontSize uses a 288 DPI reference scale
     size_pct = style.get('size', 5)
     ffmpeg_font_size = max(6, round((size_pct / 100) * 288))
-    
-    # margin_bottom is in canvas pixels — convert to libass points
-    # using same 288 DPI scale relative to a 1080p reference height
+
     margin_px = style.get('margin_bottom', 20)
     margin_v = max(0, round((margin_px / 1080) * 288))
 
     position = style.get('position', 'bottom')
-    alignment = 6 if position == 'top' else 5 if position == 'middle' else 2
+    if position == 'top':
+        alignment = 6
+        margin_v = max(0, round((margin_px / 1080) * 288))
+    elif position == 'middle':
+        alignment = 5
+        margin_v = 0  # libass ignores MarginV for middle — must be 0
+    else:  # bottom
+        alignment = 2
+        margin_v = max(0, round((margin_px / 1080) * 288))
+
+    bold = 1 if style.get('bold', False) else 0
+    italic = 1 if style.get('italic', False) else 0
+
+    # Colour may come in as HTML (#rrggbb) from editor or BGR from config
+    colour = style.get('colour', '&H00FFFFFF')
+    outline_colour = style.get('outline_colour', '&H00000000')
+    if colour.startswith('#'):
+        colour = _rgb_to_bgr(colour)
+    if outline_colour.startswith('#'):
+        outline_colour = _rgb_to_bgr(outline_colour)
 
     style_str = (
         f"FontName={style['font']}"
         f",FontSize={ffmpeg_font_size}"
-        f",PrimaryColour={style['colour']}"
-        f",OutlineColour={style['outline_colour']}"
+        f",Bold={bold}"
+        f",Italic={italic}"
+        f",PrimaryColour={colour}"
+        f",OutlineColour={outline_colour}"
         f",Outline={style['outline']}"
         f",Shadow={style['shadow']}"
         f",Alignment={alignment}"

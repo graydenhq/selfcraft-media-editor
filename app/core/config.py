@@ -36,3 +36,12 @@ def get_review_folder():
 
 def subtitle_review_enabled():
     return load_config().get('subtitle_review', True)
+
+def bgr_to_rgb(bgr_hex):
+    bgr_hex = bgr_hex.replace('&H', '').replace('&h', '')
+    if len(bgr_hex) == 8:
+        bgr_hex = bgr_hex[2:]
+    if len(bgr_hex) == 6:
+        b, g, r = bgr_hex[0:2], bgr_hex[2:4], bgr_hex[4:6]
+        return f'#{r}{g}{b}'
+    return '#ffffff'
