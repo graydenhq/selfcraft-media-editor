@@ -406,7 +406,7 @@
         if (position === 'top') {
           startY = margin + fontSize;
         } else if (position === 'middle') {
-          startY = (canvas.height / 2) - ((lines.length - 1) * lineHeight / 2);
+          startY = (canvas.height / 2) - ((lines.length * lineHeight) / 2) + fontSize;
         } else {
           startY = canvas.height - margin - (lines.length - 1) * lineHeight;
         }
