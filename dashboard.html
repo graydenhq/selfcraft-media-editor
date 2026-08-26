@@ -164,6 +164,20 @@
       .stat { padding: 0.5rem 0.75rem; }
       .folder-btn { font-size: 0.75rem; padding: 5px 10px; }
     }
+    /* Extra tweaks for very small phones (≈375px) */
+    @media (max-width: 400px) {
+      header { gap: 0.5rem; }
+      .header-title h1 { font-size: 1rem; }
+      .header-actions { flex-direction: column; width: 100%; }
+      .header-actions .btn { width: 100%; text-align: center; }
+      .folder-bar { gap: 0.4rem; }
+      .card .card-footer { gap: 0.5rem; }
+      .card-actions { flex-direction: column; align-items: stretch; }
+      .card-actions .btn { width: 100%; }
+      .settings-panel { padding: 1rem; max-width: 95vw; }
+      .modal-video { max-width: 95vw; }
+      .btn { padding: 10px; }
+    }
   </style>
 </head>
 <body>

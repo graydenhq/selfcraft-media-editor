@@ -123,6 +123,20 @@
       #videoPlayer { max-height: 40vh; }
       .video-panel { padding: 0.5rem; }
     }
+    /* Small-phone adjustments (~375px) */
+    @media (max-width: 400px) {
+      header { padding: 0.5rem; }
+      .header-left h1 { font-size: 0.95rem; }
+      .header-actions { width: 100%; display: flex; flex-direction: column; gap: 0.4rem; }
+      .btn-save, .btn-approve { width: 100%; }
+      .video-wrap { width: 100%; }
+      #videoPlayer { width: 100%; height: auto; max-height: 36vh; }
+      #captionCanvas { width: 100%; height: 100%; }
+      .style-panel { padding: 0.6rem; }
+      .style-group select, .style-group input { font-size: 0.9rem; }
+      .preview-caption { min-height: 64px; }
+      .editor-list { padding-right: 0.5rem; }
+    }
   </style>
 </head>
 <body>
