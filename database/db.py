@@ -16,9 +16,22 @@ def init_db():
             lesson_number TEXT,
             lesson_title TEXT,
             status TEXT DEFAULT 'detected',
-            date_added TEXT DEFAULT CURRENT_TIMESTAMP
+            date_added TEXT DEFAULT CURRENT_TIMESTAMP,
+            progress TEXT,
+            srt_path TEXT,
+            duration REAL
         )
     ''')
+    # Ensure older DBs have the newer columns
+    cur = conn.cursor()
+    cur.execute("PRAGMA table_info(videos)")
+    cols = [r[1] for r in cur.fetchall()]
+    if 'progress' not in cols:
+        conn.execute("ALTER TABLE videos ADD COLUMN progress TEXT")
+    if 'srt_path' not in cols:
+        conn.execute("ALTER TABLE videos ADD COLUMN srt_path TEXT")
+    if 'duration' not in cols:
+        conn.execute("ALTER TABLE videos ADD COLUMN duration REAL")
     conn.commit()
     conn.close()
 
@@ -41,13 +54,28 @@ def add_video(filepath, metadata):
          metadata.get('lesson_title'), status)
     )
     conn.commit()
+
+    # Update duration for this file (compute once at add-time)
+    try:
+        from app.media.render import get_video_duration
+        row = conn.execute("SELECT id FROM videos WHERE filepath = ?", (filepath,)).fetchone()
+        if row:
+            vid = row[0]
+            dur = get_video_duration(filepath)
+            if dur is not None:
+                conn.execute("UPDATE videos SET duration = ? WHERE id = ?", (dur, vid))
+                conn.commit()
+    except Exception:
+        # Non-fatal: if probing fails, leave duration NULL
+        pass
+
     conn.close()
 
 def get_all_videos():
     conn = sqlite3.connect(DB_PATH)
     rows = conn.execute(
         "SELECT id, filepath, programme, week, module, lesson_number, "
-        "lesson_title, status, date_added, progress, srt_path "
+        "lesson_title, status, date_added, progress, srt_path, duration "
         "FROM videos ORDER BY date_added DESC"
     ).fetchall()
     conn.close()
@@ -110,3 +138,31 @@ def get_srt_path(video_id):
                        (video_id,)).fetchone()
     conn.close()
     return row[0] if row else None
+
+
+def backfill_durations(progress_callback=None):
+    """Compute and store duration for videos that have NULL duration.
+
+    progress_callback(optional): called with (processed, total) to report progress.
+    """
+    conn = sqlite3.connect(DB_PATH)
+    rows = conn.execute("SELECT id, filepath FROM videos WHERE duration IS NULL").fetchall()
+    total = len(rows)
+    processed = 0
+    try:
+        from app.media.render import get_video_duration
+        for r in rows:
+            vid, path = r[0], r[1]
+            try:
+                if path and os.path.exists(path):
+                    dur = get_video_duration(path)
+                    if dur is not None:
+                        conn.execute("UPDATE videos SET duration = ? WHERE id = ?", (dur, vid))
+                        conn.commit()
+            except Exception:
+                pass
+            processed += 1
+            if progress_callback:
+                progress_callback(processed, total)
+    finally:
+        conn.close()

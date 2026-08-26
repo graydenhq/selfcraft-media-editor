@@ -11,6 +11,7 @@ from database.db import (get_all_videos, get_video_by_id, update_status,
                           reset_stuck_jobs, add_video, delete_completed,
                           update_progress, delete_video, delete_by_filepath)
 from app.media.metadata import extract_metadata
+from app.media.render import get_video_duration
 from app.workflow.orchestrator import process_video
 from app.core.config import load_config, get_folders, get_file_manager
 from app.export.naming import get_next_version_label
@@ -79,7 +80,10 @@ def list_videos():
             "status": r[7],
             "date_added": r[8],
             "progress": r[9],
-            "srt_path": r[10]
+            "srt_path": r[10],
+            # Use cached duration from DB when available, otherwise probe once as a fallback
+            "duration": (r[11] if len(r) > 11 and r[11] is not None else
+                         (get_video_duration(r[1]) if r[1] and os.path.exists(r[1]) else None))
         }
         for r in rows
     ]

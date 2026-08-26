@@ -90,6 +90,10 @@
     .progress-dot { display: inline-block; animation: blink 1s infinite; }
     @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.2;} }
     .v2-note { font-size: 0.72rem; color: #888; display: block; margin-top: 3px; }
+    /* Truncate long lesson/file names and show meta */
+    .lesson-title-wrap { display: flex; flex-direction: column; gap: 4px; }
+    .lesson-title { font-weight: 600; max-width: 360px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .lesson-meta { font-size: 0.72rem; color: #888; }
     .content-type { font-size: 0.72rem; color: #888; background: #f0f0f0;
                     padding: 2px 6px; border-radius: 4px;
                     display: inline-block; margin-top: 3px; }
@@ -386,7 +390,6 @@
         <th>Content Info</th>
         <th>Status</th>
         <th>Progress</th>
-        <th>Added</th>
         <th>Action</th>
       </tr>
     </thead>
@@ -410,6 +413,27 @@
     const d = new Date(str.replace(' ', 'T') + 'Z');
     return d.toLocaleDateString(undefined, { day:'numeric', month:'short' })
       + ' ' + d.toLocaleTimeString(undefined, { hour:'2-digit', minute:'2-digit' });
+  }
+
+  function formatDuration(secs) {
+    if (!secs && secs !== 0) return '';
+    const s = Math.round(secs);
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sec = s % 60;
+    const parts = [];
+    if (h) parts.push(h + 'h');
+    if (m) parts.push(m + 'm');
+    parts.push(sec + 's');
+    return parts.join(' ');
+  }
+
+  function formatDateFull(str) {
+    if (!str) return '—';
+    const d = new Date(str.replace(' ', 'T') + 'Z');
+    const datePart = d.toLocaleDateString(undefined, { day:'2-digit', month:'short', year:'numeric' });
+    const timePart = d.toLocaleTimeString(undefined, { hour:'2-digit', minute:'2-digit', hour12: true });
+    return `${datePart} ${timePart}`;
   }
 
   function statusBadge(s) {
@@ -514,20 +538,26 @@
     lastVideoJson = newJson;
     const tbody = document.getElementById('queue');
     if (!videos.length) {
-      tbody.innerHTML = '<tr><td colspan="7" class="empty">No videos detected yet. Drop a video into your watched folder.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" class="empty">No videos detected yet. Drop a video into your watched folder.</td></tr>';
       return;
     }
-    tbody.innerHTML = videos.map((v, i) => `
+    tbody.innerHTML = videos.map((v, i) => {
+      const name = v.lesson_title || v.filepath.split('/').pop();
+      return `
       <tr class="row-${v.status}">
         <td class="num-cell">${i + 1}</td>
-        <td>${v.lesson_title || v.filepath.split('/').pop()}</td>
+        <td>
+          <div class="lesson-title-wrap">
+            <div class="lesson-title" title="${escapeHtml(name)}">${escapeHtml(name)}</div>
+            <div class="lesson-meta">${v.duration ? formatDuration(v.duration) + ' · ' : ''}Added: ${formatDateFull(v.date_added)}</div>
+          </div>
+        </td>
         <td>${contentInfo(v)}</td>
         <td>${statusBadge(v.status)}</td>
         <td>${progressCell(v)}</td>
-        <td class="date-cell">${formatDate(v.date_added)}</td>
         <td>${actionCell(v)}</td>
       </tr>
-    `).join('');
+    `}).join('');
   }
 
   function renderCards(videos) {
@@ -544,7 +574,7 @@
         <div class="card-title">${i + 1}. ${v.lesson_title || v.filepath.split('/').pop()}</div>
         <div class="card-meta">
           ${contentInfo(v)}<br>
-          🕐 ${formatDate(v.date_added)}
+          🕐 ${formatDuration(v.duration || 0)} · Added: ${formatDateFull(v.date_added)}
         </div>
         ${v.status === 'processing' && v.progress
           ? `<div class="card-progress">
