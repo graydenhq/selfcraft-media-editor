@@ -182,9 +182,22 @@ The dashboard connects to the server at `http://127.0.0.1:8000`.
 
 ## First Run
 
-The first time Whisper runs it downloads the base model (~140 MB).
-An internet connection is required once. After that, everything runs
-fully offline.
+The first time Whisper runs it downloads a model the first time it's used.
+During `setup.bat` on Windows you will be prompted which Whisper model to
+download. Choose based on the trade-off between speed, RAM usage, and
+transcription accuracy:
+
+- `tiny` — ~75 MB (fastest, lowest accuracy)
+- `base` — ~140 MB (good balance, default)
+- `small` — ~460 MB (better accuracy, slower)
+- `medium` / `large` — progressively larger (1.5 GB+, 5GB+) — only choose
+  these if you have the disk space and need the best possible accuracy.
+
+An internet connection is required for the model download. Once downloaded
+into the virtual environment, transcription runs fully offline. The
+Windows `setup.bat` will show the prompt and then call Python to download
+the selected model into `.venv` (this can take several minutes for larger
+models).
 
 ---
 

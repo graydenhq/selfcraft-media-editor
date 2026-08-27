@@ -1,19 +1,7 @@
 @echo off
-title SelfCraft Media Editor — First Time Setup
-color 0A
-
-echo.
-echo  =============================================
-echo   SelfCraft Media Editor — Setup
-echo  =============================================
-echo.
-echo  This will set up everything you need.
-echo  Please do not close this window.
-echo.
-pause
+cd /d "%~dp0.."
 
 :: Check Python
-echo  Checking Python...
 python --version >nul 2>&1
 if errorlevel 1 (
     echo.
@@ -32,7 +20,6 @@ if errorlevel 1 (
 )
 
 :: Check FFmpeg
-echo  Checking FFmpeg...
 ffmpeg -version >nul 2>&1
 if errorlevel 1 (
     echo.
@@ -40,32 +27,59 @@ if errorlevel 1 (
     winget install ffmpeg
     echo.
     echo  FFmpeg installed.
-    echo  Please close this window, reopen it, and run setup.bat again.
+    echo  Please close this window, reopen it, and run
+    echo  "SelfCraft Media Editor.bat" again.
     echo.
     pause
     exit
 )
 
 :: Create virtual environment
-echo.
 echo  Setting up the application environment...
 if not exist .venv (
     python -m venv .venv
 )
 
-:: Activate and install libraries
+:: Install libraries
 echo  Installing required libraries (this may take a few minutes)...
 call .venv\Scripts\activate
 pip install fastapi uvicorn openai-whisper watchdog python-multipart --quiet
 
-:: Create media folders
-echo  Creating your media folders...
+:: Ask which Whisper model to download (optional)
+echo.
+echo Which Whisper model would you like to download for transcription?
+echo  [T]iny (~75MB)   [B]ase (~140MB)   [S]mall (~460MB)   [N]one (skip now)
+set /p MODEL_CHOICE=Enter T/B/S/N (default B):
+if "%MODEL_CHOICE%"=="" set MODEL_CHOICE=B
+set MODEL=none
+if /I "%MODEL_CHOICE%"=="T" set MODEL=tiny
+if /I "%MODEL_CHOICE%"=="B" set MODEL=base
+if /I "%MODEL_CHOICE%"=="S" set MODEL=small
+if /I "%MODEL_CHOICE%"=="N" set MODEL=none
+
+if /I "%MODEL%"=="none" (
+    echo Skipping Whisper model download. You can download later from the Settings.
+) else (
+    echo Downloading Whisper model "%MODEL%" (this may take some minutes)...
+    .venv\Scripts\python -c "import whisper, sys
+try:
+    m=whisper.load_model('%MODEL%')
+    print('Model downloaded:', '%MODEL%')
+except Exception as e:
+    print('Model download failed:', e)
+    sys.exit(1)
+"
+)
+
+:: Create media folders on Desktop
+echo  Creating your media folders on the Desktop...
 set MEDIA=%USERPROFILE%\Desktop\SelfCraft Media
 if not exist "%MEDIA%\Raw Videos\Recorded Classes" mkdir "%MEDIA%\Raw Videos\Recorded Classes"
 if not exist "%MEDIA%\Raw Videos\Teaching Reels" mkdir "%MEDIA%\Raw Videos\Teaching Reels"
 if not exist "%MEDIA%\Raw Videos\Testimonials" mkdir "%MEDIA%\Raw Videos\Testimonials"
 if not exist "%MEDIA%\Edited Videos" mkdir "%MEDIA%\Edited Videos"
 if not exist "%MEDIA%\Temp" mkdir "%MEDIA%\Temp"
+if not exist "%MEDIA%\Review" mkdir "%MEDIA%\Review"
 
 :: Write config with correct Windows paths
 echo  Configuring folder paths...
@@ -75,9 +89,10 @@ config_path = 'config/settings.json'
 with open(config_path) as f:
     cfg = json.load(f)
 base = os.path.join(os.path.expanduser('~'), 'Desktop', 'SelfCraft Media')
-cfg['folders']['raw_videos'] = base + '/Raw Videos'
-cfg['folders']['edited_videos'] = base + '/Edited Videos'
-cfg['folders']['temp'] = base + '/Temp'
+cfg['folders']['raw_videos'] = base.replace('\\\\', '/') + '/Raw Videos'
+cfg['folders']['edited_videos'] = base.replace('\\\\', '/') + '/Edited Videos'
+cfg['folders']['temp'] = base.replace('\\\\', '/') + '/Temp'
+cfg['review_folder'] = base.replace('\\\\', '/') + '/Review'
 cfg['file_manager'] = 'explorer'
 with open(config_path, 'w') as f:
     json.dump(cfg, f, indent=2)
@@ -85,13 +100,14 @@ print('Config updated.')
 "
 
 echo.
-echo  =============================================
+echo  ============================================
 echo   Setup complete!
-echo  =============================================
+echo  ============================================
 echo.
-echo  Your media folders have been created on your Desktop
+echo  Your media folders are on your Desktop
 echo  inside a folder called "SelfCraft Media".
 echo.
-echo  To use the app, double-click "start.bat"
+echo  Double-click "SelfCraft Media Editor.bat"
+echo  to launch the app.
 echo.
 pause

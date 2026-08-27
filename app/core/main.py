@@ -54,6 +54,21 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="SME Local API", lifespan=lifespan)
 
+# Serve the repository root (frontend files) so the dashboard and assets
+# are available at http://127.0.0.1:8000/
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+
+# Serve frontend assets under /static and provide a root route that returns
+# the dashboard HTML. This keeps API routes (e.g. /health) working reliably.
+root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+app.mount("/static", StaticFiles(directory=root_dir), name="static")
+
+
+@app.get("/")
+def root_index():
+    return FileResponse(os.path.join(root_dir, 'dashboard.html'))
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
