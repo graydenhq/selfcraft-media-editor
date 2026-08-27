@@ -61,14 +61,13 @@ if /I "%MODEL%"=="none" (
     echo Skipping Whisper model download. You can download later from the Settings.
 ) else (
     echo Downloading Whisper model "%MODEL%" (this may take some minutes)...
-    .venv\Scripts\python -c "import whisper, sys
-try:
-    m=whisper.load_model('%MODEL%')
-    print('Model downloaded:', '%MODEL%')
-except Exception as e:
-    print('Model download failed:', e)
-    sys.exit(1)
-"
+    .venv\Scripts\python scripts\download_model.py %MODEL%
+    if errorlevel 1 (
+        echo Model download failed or was cancelled.
+        echo Please re-run setup.bat to try again, or download a smaller model.
+        pause
+        exit /b 1
+    )
 )
 
 :: Create media folders on Desktop
