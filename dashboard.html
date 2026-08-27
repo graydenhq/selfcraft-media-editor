@@ -93,6 +93,7 @@
     /* Truncate long lesson/file names and show meta */
     .lesson-title-wrap { display: flex; flex-direction: column; gap: 4px; }
     .lesson-title { font-weight: 600; max-width: 360px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .thumb { width: 96px; height: 54px; object-fit: cover; border-radius:6px; margin-right:8px; vertical-align:middle }
     .lesson-meta { font-size: 0.72rem; color: #888; }
     .content-type { font-size: 0.72rem; color: #888; background: #f0f0f0;
                     padding: 2px 6px; border-radius: 4px;
@@ -547,9 +548,12 @@
       <tr class="row-${v.status}">
         <td class="num-cell">${i + 1}</td>
         <td>
-          <div class="lesson-title-wrap">
-            <div class="lesson-title" title="${escapeHtml(name)}">${escapeHtml(name)}</div>
-            <div class="lesson-meta">${v.duration ? formatDuration(v.duration) + ' · ' : ''}Added: ${formatDateFull(v.date_added)}</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            ${v.thumbnail_url ? `<img class=\"thumb\" src=\"${v.thumbnail_url}\">` : ''}
+            <div class="lesson-title-wrap">
+              <div class="lesson-title" title="${escapeHtml(name)}">${escapeHtml(name)}</div>
+              <div class="lesson-meta">${v.duration ? formatDuration(v.duration) + ' · ' : ''}Added: ${formatDateFull(v.date_added)}</div>
+            </div>
           </div>
         </td>
         <td>${contentInfo(v)}</td>
@@ -571,11 +575,17 @@
     }
     container.innerHTML = videos.map((v, i) => `
       <div class="card card-${v.status}">
-        <div class="card-title">${i + 1}. ${v.lesson_title || v.filepath.split('/').pop()}</div>
-        <div class="card-meta">
-          ${contentInfo(v)}<br>
-          🕐 ${formatDuration(v.duration || 0)} · Added: ${formatDateFull(v.date_added)}
+        <div style="display:flex;gap:12px;align-items:center;">
+          ${v.thumbnail_url ? `<img class=\"thumb\" src=\"${v.thumbnail_url}\">` : ''}
+          <div>
+            <div class="card-title">${i + 1}. ${v.lesson_title || v.filepath.split('/').pop()}</div>
+            <div class="card-meta">
+              ${contentInfo(v)}<br>
+              🕐 ${formatDuration(v.duration || 0)} · Added: ${formatDateFull(v.date_added)}
+            </div>
+          </div>
         </div>
+        
         ${v.status === 'processing' && v.progress
           ? `<div class="card-progress">
                <span class="progress-dot">●</span> ${v.progress}
