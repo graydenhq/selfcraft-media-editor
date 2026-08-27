@@ -83,10 +83,45 @@ def list_videos():
             "srt_path": r[10],
             # Use cached duration from DB when available, otherwise probe once as a fallback
             "duration": (r[11] if len(r) > 11 and r[11] is not None else
-                         (get_video_duration(r[1]) if r[1] and os.path.exists(r[1]) else None))
+                         (get_video_duration(r[1]) if r[1] and os.path.exists(r[1]) else None)),
+            "thumbnail_url": (f"/thumbnail/{r[0]}" if len(r) > 12 and r[12] else None),
+            "preview_url": (f"/preview/{r[0]}" if len(r) > 13 and r[13] else None)
         }
         for r in rows
     ]
+
+
+@app.get("/thumbnail/{video_id}")
+def serve_thumbnail(video_id: int):
+    from fastapi.responses import FileResponse
+    video = get_video_by_id(video_id)
+    if not video:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Not found")
+    # thumbnail_path is column index 12 (0-based)
+    thumb = None
+    if len(video) > 12:
+        thumb = video[12]
+    if not thumb or not os.path.exists(thumb):
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Thumbnail not found")
+    return FileResponse(thumb, media_type="image/jpeg")
+
+
+@app.get("/preview/{video_id}")
+def serve_preview(video_id: int):
+    from fastapi.responses import FileResponse
+    video = get_video_by_id(video_id)
+    if not video:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Not found")
+    prev = None
+    if len(video) > 13:
+        prev = video[13]
+    if not prev or not os.path.exists(prev):
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Preview not found")
+    return FileResponse(prev, media_type="video/mp4")
 
 @app.get("/config")
 def get_config():

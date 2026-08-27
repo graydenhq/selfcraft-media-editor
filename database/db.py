@@ -19,7 +19,9 @@ def init_db():
             date_added TEXT DEFAULT CURRENT_TIMESTAMP,
             progress TEXT,
             srt_path TEXT,
-            duration REAL
+            duration REAL,
+            thumbnail_path TEXT,
+            preview_path TEXT
         )
     ''')
     # Ensure older DBs have the newer columns
@@ -32,6 +34,10 @@ def init_db():
         conn.execute("ALTER TABLE videos ADD COLUMN srt_path TEXT")
     if 'duration' not in cols:
         conn.execute("ALTER TABLE videos ADD COLUMN duration REAL")
+    if 'thumbnail_path' not in cols:
+        conn.execute("ALTER TABLE videos ADD COLUMN thumbnail_path TEXT")
+    if 'preview_path' not in cols:
+        conn.execute("ALTER TABLE videos ADD COLUMN preview_path TEXT")
     conn.commit()
     conn.close()
 
@@ -65,6 +71,16 @@ def add_video(filepath, metadata):
             if dur is not None:
                 conn.execute("UPDATE videos SET duration = ? WHERE id = ?", (dur, vid))
                 conn.commit()
+            # Kick off thumbnail / preview generation (best-effort)
+            try:
+                from app.media import preview as preview_mod
+                try:
+                    preview_mod.generate_and_store(filepath, vid)
+                except Exception:
+                    # non-fatal
+                    pass
+            except Exception:
+                pass
     except Exception:
         # Non-fatal: if probing fails, leave duration NULL
         pass
@@ -75,11 +91,19 @@ def get_all_videos():
     conn = sqlite3.connect(DB_PATH)
     rows = conn.execute(
         "SELECT id, filepath, programme, week, module, lesson_number, "
-        "lesson_title, status, date_added, progress, srt_path, duration "
+        "lesson_title, status, date_added, progress, srt_path, duration, thumbnail_path, preview_path "
         "FROM videos ORDER BY date_added DESC"
     ).fetchall()
     conn.close()
     return rows
+
+
+def set_preview_paths(video_id, thumbnail_path, preview_path):
+    conn = sqlite3.connect(DB_PATH)
+    conn.execute("UPDATE videos SET thumbnail_path = ?, preview_path = ? WHERE id = ?",
+                 (thumbnail_path, preview_path, video_id))
+    conn.commit()
+    conn.close()
 
 def get_video_by_id(video_id):
     conn = sqlite3.connect(DB_PATH)
